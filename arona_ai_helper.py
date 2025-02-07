@@ -49,21 +49,6 @@ def is_same_raid(a, b):
     return True
 
 
-def translate_term(s):
-    """將英文關鍵字翻譯成中文"""
-    mapping = {
-        "Outdoor": "野外",
-        "Indoor": "室內",
-        "Street": "城鎮",
-        "LightArmor": "輕甲",
-        "HeavyArmor": "重甲",
-        "Unarmed": "神秘",
-        "ElasticArmor": "彈力"
-    }
-    if s in mapping:
-        return mapping[s]
-    else:
-        raise ValueError(f"{s} is not translated!")
 
 
 def format_sheet_name(s):
@@ -117,7 +102,7 @@ def main():
     while ref_jp_raid >= 0 and not is_same_raid(jp_raids[ref_jp_raid], curr_tw_raid):
         curr_raid = jp_raids[ref_jp_raid]
         try:
-            raid_name = raid_info["Raid"][curr_raid["RaidId"] - 1]["Name"] + " " + translate_term(curr_raid["Terrain"])
+            raid_name = raid_info["Raid"][curr_raid["RaidId"] - 1]["Name"] + " " + (curr_raid["Terrain"])
         except Exception as e:
             print("Error processing raid name:", e)
             raid_name = ""
@@ -140,7 +125,7 @@ def main():
     while ref_jp_eraid >= 0 and not is_same_raid(jp_eraids[ref_jp_eraid], curr_tw_eraid):
         curr_eraid = jp_eraids[ref_jp_eraid]
         try:
-            eraid_name = raid_info["Raid"][curr_eraid["RaidId"] - 1]["Name"] + " " + translate_term(curr_eraid["Terrain"])
+            eraid_name = raid_info["Raid"][curr_eraid["RaidId"] - 1]["Name"] + " " + (curr_eraid["Terrain"])
         except Exception as e:
             print("Error processing eraid name:", e)
             eraid_name = ""
@@ -170,7 +155,7 @@ def main():
 
     # 處理 raid 資料
     for no_raid, curr_raid_info in search_raid.items():
-        raid_name = raid_map[no_raid]["name"] + " 總力"
+        raid_name = f"S{no_raid} - {raid_map[no_raid]['name']} 總力戰"
         try:
             key_time = str(curr_raid_info["trophyCutByTime"]["id"][0])
         except Exception:
@@ -215,7 +200,7 @@ def main():
         for battle_type, battle_data in char_usage_all.items():
             last_under_index = battle_type.rfind("_")
             battle_suffix = battle_type[last_under_index+1:]
-            eraid_name = translate_term(battle_suffix) + " " + eraid_map[no_eraid]["name"] + " 大決戰"
+            eraid_name = f"S{no_eraid} - {eraid_map[no_eraid]['name']} {battle_suffix} 大決戰"
             # 為了避免 key 重複，將 eraid_time 與 eraid_name 連接起來作為 key
             time_map[str(eraid_time) + eraid_name] = eraid_name
             char_usage = battle_data.get("r", {})
