@@ -5,8 +5,8 @@ from AronaStatistics import AronaStatistics
 import os
 import sys
 import asyncio
-import pandas as pd
-from tabulate import tabulate
+from utils import text_to_image
+
 
 # 設定 Bot
 intents = discord.Intents.default()
@@ -76,8 +76,6 @@ async def eraid_stats(interaction: discord.Interaction, season: int, armor_type:
 
     await interaction.followup.send(embed=embed)
 
-
-
 @bot.tree.command(name="statstu", description="取得特定角色的大決戰數據")
 @app_commands.choices(armor_type=[
     app_commands.Choice(name="LightArmor", value="LightArmor"),
@@ -88,16 +86,21 @@ async def eraid_stats(interaction: discord.Interaction, season: int, armor_type:
 async def statstu(interaction: discord.Interaction, stu_name: str, seasons: int, armor_type: str):
     await interaction.response.defer()
 
-    arona_stats = AronaStatistics("data.xlsx")  
+    # 呼叫 AronaStatistics 的方法
     sheet_name, stats_text = arona_stats.get_student_stats(stu_name, seasons, armor_type)
-
     if stats_text is None:
         await interaction.followup.send(f"⚠ 找不到 `{stu_name}` `S{seasons}` `{armor_type}` `大決戰` 的數據")
         return
 
-    # **不要用 Embed，直接發送文字**
-    await interaction.followup.send(f"📊 **{stu_name} - {sheet_name} 的使用數據**\n\n{stats_text}")
+    # Debug 印出 rich 表格文字（方便在終端檢查）
+    print("【Debug】最終表格文字內容：\n", stats_text)
 
+    # 將表格文字轉為圖片
+    image_bytes = text_to_image(stats_text, font_path="SarasaFixedCL-ExtraLight.ttf", font_size=42)
+    await interaction.followup.send(
+        content=f"📊 **{stu_name} - {sheet_name} 的使用數據**",
+        file=discord.File(image_bytes, filename="table.png")
+    )
 @bot.tree.command(name="restart", description="🔄 重新啟動 Bot (限管理員)")
 @app_commands.checks.has_permissions(administrator=True)
 async def restart(interaction: discord.Interaction):
