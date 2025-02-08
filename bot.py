@@ -5,6 +5,8 @@ from AronaStatistics import AronaStatistics
 import os
 import sys
 import asyncio
+import pandas as pd
+from tabulate import tabulate
 
 # 設定 Bot
 intents = discord.Intents.default()
@@ -75,21 +77,26 @@ async def eraid_stats(interaction: discord.Interaction, season: int, armor_type:
     await interaction.followup.send(embed=embed)
 
 
-@bot.tree.command(name="statstu", description="取得特定角色的 RAID 和 ERAID 數據")
-async def statstu(interaction: discord.Interaction, stu_name: str):
-    await interaction.response.defer()
-    
-    stats = arona_stats.get_student_stats(stu_name)
-    if not stats:
-        await interaction.followup.send(f"⚠ 找不到角色 `{stu_name}` 的數據")
-        return
-    
-    embed = discord.Embed(title=f"📊 {stu_name} 的使用數據", color=discord.Color.purple())
-    for sheet, data in stats.items():
-        usage_info = "\n".join([f"{key}: {value}" for key, value in data.items()])
-        embed.add_field(name=sheet, value=usage_info if usage_info else "無數據", inline=False)
 
-    await interaction.followup.send(embed=embed)
+@bot.tree.command(name="statstu", description="取得特定角色的大決戰數據")
+@app_commands.choices(armor_type=[
+    app_commands.Choice(name="LightArmor", value="LightArmor"),
+    app_commands.Choice(name="ElasticArmor", value="ElasticArmor"),
+    app_commands.Choice(name="HeavyArmor", value="HeavyArmor"),
+    app_commands.Choice(name="Unarmed", value="Unarmed")
+])
+async def statstu(interaction: discord.Interaction, stu_name: str, seasons: int, armor_type: str):
+    await interaction.response.defer()
+
+    arona_stats = AronaStatistics("data.xlsx")  
+    sheet_name, stats_text = arona_stats.get_student_stats(stu_name, seasons, armor_type)
+
+    if stats_text is None:
+        await interaction.followup.send(f"⚠ 找不到 `{stu_name}` `S{seasons}` `{armor_type}` `大決戰` 的數據")
+        return
+
+    # **不要用 Embed，直接發送文字**
+    await interaction.followup.send(f"📊 **{stu_name} - {sheet_name} 的使用數據**\n\n{stats_text}")
 
 @bot.tree.command(name="restart", description="🔄 重新啟動 Bot (限管理員)")
 @app_commands.checks.has_permissions(administrator=True)
