@@ -400,4 +400,5 @@ FodyWeavers.xsd
 *.sln.iml
 *TOKEN.txt
 
+OWNER_ID.txt
 data.xlsx

@@ -1,5 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# @name         Arona AI Helper
+# @version      v0.1
+# @description  Geather student usage in different raids
+# @author       Jacky Ho (javascript code)
+# @author       fiseleo (python script)
+
 
 import requests
 import time

@@ -16,22 +16,8 @@ class AronaStatistics:
             for column in df.columns:
                 if f"S{season}" in column and "總力戰" in column:
                     return column
-        print(f"⚠ 未找到 S{season} 相關的 RAID 總力戰", flush=True)
+        print(f"⚠ 未找到 S{season} 相關的總力戰", flush=True)
         return f"S{season} 總力戰 (未知名稱)"
-
-    def get_raid_stats(self, season: int, rank: int):
-        """獲取 RAID 指定賽季的角色數據"""
-        raid_name = self.get_raid_name(season)
-        for sheet in self.xlsx.sheet_names:
-            df = pd.read_excel(self.xlsx, sheet_name=sheet)
-            if raid_name in df.columns:
-                return (
-                    df[['stdNm', raid_name]]
-                    .sort_values(by=raid_name, ascending=False)
-                    .dropna()
-                    .values.tolist()
-                )
-        return []
 
     def get_eraid_name(self, season: int, armor_type: str):
         """
@@ -44,6 +30,10 @@ class AronaStatistics:
                 if f"S{season}" in column and "大決戰" in column:
                     if armor_type in column:
                         possible_names.append(column)
+                        
+        # 去除重複值
+        possible_names = list(dict.fromkeys(possible_names))
+        
         if not possible_names:
             print(
                 f"⚠ 未找到 S{season} {armor_type} 相關的 ERAID 大決戰", flush=True
@@ -56,6 +46,39 @@ class AronaStatistics:
             )
         return possible_names[0]
 
+    def get_summary_sheet_name(self, rank: int) -> str:
+        """
+        根據 rank 返回對應的 Summary 工作表名稱：
+        - 1 ~ 1000："Summary - Rank 1000"
+        - 1001 ~ 5000："Summary - Rank 1000 to 5000"
+        - 5001 ~ 10000："Summary - Rank 5000 to 10000"
+        - 10001 ~ 20000："Summary - Rank 10000 to 20000"
+        """
+        if 1 <= rank <= 1000:
+            return "Summary - Rank 1000"
+        elif 1001 <= rank <= 5000:
+            return "Summary - Rank 1000 to 5000"
+        elif 5001 <= rank <= 10000:
+            return "Summary - Rank 5000 to 10000"
+        elif 10001 <= rank <= 20000:
+            return "Summary - Rank 10000 to 20000"
+        else:
+            raise ValueError(f"⚠ Rank {rank} 不在支援範圍內")
+
+    def get_raid_stats(self, season: int, rank: int):
+        """獲取 RAID 指定賽季的角色數據"""
+        raid_name = self.get_raid_name(season)
+        summary_sheet = self.get_summary_sheet_name(rank)
+        df = pd.read_excel(self.xlsx, sheet_name=summary_sheet)
+        if raid_name in df.columns:
+            return (
+                df[['stdNm', raid_name]]
+                .sort_values(by=raid_name, ascending=False)
+                .dropna()
+                .values.tolist()
+            )
+        return []
+
     def get_eraid_stats(self, season: int, armor_type: str, rank: int):
         """獲取 ERAID 指定賽季、裝甲類型的角色數據"""
         valid_armor_types = ["LightArmor", "ElasticArmor", "HeavyArmor", "Unarmed"]
@@ -65,15 +88,15 @@ class AronaStatistics:
             )
 
         eraid_name = self.get_eraid_name(season, armor_type)
-        for sheet in self.xlsx.sheet_names:
-            df = pd.read_excel(self.xlsx, sheet_name=sheet)
-            if eraid_name in df.columns:
-                return (
-                    df[['stdNm', eraid_name]]
-                    .sort_values(by=eraid_name, ascending=False)
-                    .dropna()
-                    .values.tolist()
-                )
+        summary_sheet = self.get_summary_sheet_name(rank)
+        df = pd.read_excel(self.xlsx, sheet_name=summary_sheet)
+        if eraid_name in df.columns:
+            return (
+                df[['stdNm', eraid_name]]
+                .sort_values(by=eraid_name, ascending=False)
+                .dropna()
+                .values.tolist()
+            )
         return []
 
     def get_student_stats(self, stu_name: str, seasons: int, armor_type: str):
