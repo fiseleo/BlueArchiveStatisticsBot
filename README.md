@@ -1,7 +1,7 @@
 # BlueArchiveStatisticsBot
 
 
-BlueArchiveStatisticsBot 是一款用於分析《Blue Archive》遊戲內 Raid (總力戰) 與 ERAID (大決戰) 數據的 Discord Bot。
+BlueArchiveStatisticsBot 是一款用於分析《Blue Archive》遊戲內總力戰與大決戰數據的 Discord Bot。
 
 ## 主要功能
 
