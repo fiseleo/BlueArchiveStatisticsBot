@@ -76,7 +76,8 @@ async def eraid_stats(interaction: discord.Interaction, season: int, armor_type:
 
     await interaction.followup.send(embed=embed)
 
-@bot.tree.command(name="statstu", description="取得特定角色的大決戰數據")
+
+@bot.tree.command(name="eraid_stats_stu", description="取得特定角色的大決戰數據")
 @app_commands.choices(armor_type=[
     app_commands.Choice(name="LightArmor", value="LightArmor"),
     app_commands.Choice(name="ElasticArmor", value="ElasticArmor"),
@@ -92,15 +93,62 @@ async def statstu(interaction: discord.Interaction, stu_name: str, seasons: int,
         await interaction.followup.send(f"⚠ 找不到 `{stu_name}` `S{seasons}` `{armor_type}` `大決戰` 的數據")
         return
 
-    # Debug 印出 rich 表格文字（方便在終端檢查）
+    # Debug 印出表格文字
     print("【Debug】最終表格文字內容：\n", stats_text)
 
-    # 將表格文字轉為圖片
+    # 轉換文字為圖片
     image_bytes = text_to_image(stats_text, font_path="SarasaFixedCL-ExtraLight.ttf", font_size=42)
+
+    # **建立 Discord Embed**
+    embed = discord.Embed(
+        title=f"📊 {stu_name} - {sheet_name} 的使用數據",
+        description="請參考下方表格圖片：",
+        color=discord.Color.purple()
+    )
+
+    # **將圖片附加到 Embed**
+    embed.set_image(url="attachment://table.png")
+
+    # **發送 Embed 與圖片**
     await interaction.followup.send(
-        content=f"📊 **{stu_name} - {sheet_name} 的使用數據**",
+        embed=embed,
         file=discord.File(image_bytes, filename="table.png")
     )
+
+@bot.tree.command(name="raid_stats_stu", description="取得特定角色的總力戰數據")
+
+async def statstu(interaction: discord.Interaction, stu_name: str, seasons: int):
+    await interaction.response.defer()
+
+    # 呼叫 AronaStatistics 的方法
+    sheet_name, stats_text = arona_stats.get_student_stats_raid(stu_name, seasons)
+    if stats_text is None:
+        await interaction.followup.send(f"⚠ 找不到 `{stu_name}` `S{seasons}` `總力戰` 的數據")
+        return
+
+    # Debug 印出表格文字
+    print("【Debug】最終表格文字內容：\n", stats_text)
+
+    # 轉換文字為圖片
+    image_bytes = text_to_image(stats_text, font_path="SarasaFixedCL-ExtraLight.ttf", font_size=42)
+
+    # **建立 Discord Embed**
+    embed = discord.Embed(
+        title=f"📊 {stu_name} - {sheet_name} 的使用數據",
+        description="請參考下方表格圖片：",
+        color=discord.Color.purple()
+    )
+
+    # **將圖片附加到 Embed**
+    embed.set_image(url="attachment://table.png")
+
+    # **發送 Embed 與圖片**
+    await interaction.followup.send(
+        embed=embed,
+        file=discord.File(image_bytes, filename="table.png")
+    )
+
+
 @bot.tree.command(name="restart", description="🔄 重新啟動 Bot (限管理員)")
 @app_commands.checks.has_permissions(administrator=True)
 async def restart(interaction: discord.Interaction):
