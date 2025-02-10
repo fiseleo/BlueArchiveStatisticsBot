@@ -246,6 +246,7 @@ async def raidline(interaction: discord.Interaction, sensons: int):
 @bot.tree.command(name="eraidline", description="顯示指定賽季的大決戰分數")
 async def eraidline(interaction: discord.Interaction, sensons: int):
     await interaction.response.defer()
+    
     # 1. 從 blue.triple-lab 取得該賽季的 ERAID 資料
     eraid_url = f"https://blue.triple-lab.com/eraid/{sensons}"
     eraid_data = arona.get_json(eraid_url)
@@ -253,8 +254,8 @@ async def eraidline(interaction: discord.Interaction, sensons: int):
         await interaction.followup.send("無法取得大決戰資料！")
         return
     rank_results = arona.get_rank_results(eraid_data)
-
-    # 2. 從 raidInfo 取得該賽季的 ERAID 詳細資訊
+    
+    # 2. 從 raidInfo 取得該賽季的 ERAID 詳細資訊（包含賽季詳細資訊與 Boss 名稱）
     raid_info_url = "https://schaledb.com/data/tw/raids.json"
     raid_info = arona.get_json(raid_info_url)
     if raid_info is None:
@@ -264,16 +265,37 @@ async def eraidline(interaction: discord.Interaction, sensons: int):
     if not season_data:
         await interaction.followup.send("無法取得對應的大決戰賽季資訊！")
         return
+
     terrain = season_data.get("Terrain", "未知地型")
     raid_id = season_data.get("RaidId", 0)
     boss_name = arona.get_boss_info(raid_info, raid_id)
     
     header = f"S{sensons} - {terrain} {boss_name} 的大決戰分數"
     embed = discord.Embed(title=header, color=discord.Color.green())
+    
+    # 判斷模式：若 raid_id 為 1 或 5，則視為 3min 模式；否則 4min 模式
+    mode = "3min" if raid_id in [1, 5] else "4min"
+    
+    # 針對每個排名，僅輸出分數與分數組合說明（不輸出用時）
     for rank in arona.RANKS:
-        embed.add_field(name=f"第{rank}名", value=f"{rank_results[rank]}", inline=False)
+        raw_value = rank_results[rank]
+        try:
+            score = int(raw_value)
+            formatted_score = f"{score:,}"
+        except Exception:
+            formatted_score = raw_value
+            continue
+        
+        
+        breakdown = arona.get_score_breakdown(mode, score)
+        
+        embed.add_field(
+            name=f"第{rank}名",
+            value=f"{formatted_score}  ({breakdown}) (參考用)",
+            inline=False
+        )
+    
     await interaction.followup.send(embed=embed)
-
 
 @bot.tree.command(name="restart", description="🔄 重新啟動 Bot (限管理員)")
 @app_commands.checks.has_permissions(administrator=True)
