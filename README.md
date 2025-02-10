@@ -48,7 +48,7 @@ YOUR_DISCORD_ID_HERE
 運行 Bot 只需執行以下命令：
 
 ```bash
-python bot.py
+python3 bot.py
 ```
 
 ## 指令列表
