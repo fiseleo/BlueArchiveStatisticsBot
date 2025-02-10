@@ -2,7 +2,8 @@ from rich.table import Table
 from rich.console import Console
 from PIL import Image, ImageDraw, ImageFont
 import io
-import os
+import pandas as pd
+
 
 # -------------------------------
 # 利用 Rich 產生表格文字
@@ -26,7 +27,7 @@ def generate_rich_table(title: str, headers: list, rows: list) -> str:
     print("生成的 rich 表格文字：\n", rich_text)
     return rich_text
 
-def text_to_image(text: str, font_path: str = "NotoSansMonoCJK-TC-Regular.otf", font_size: int = 48,
+def text_to_image(text: str, font_path: str = "SarasaFixedCL-ExtraLight.ttf", font_size: int = 48,
                   target_width: int = 1920, target_height: int = 1080) -> io.BytesIO:
     """
     渲染表格為圖片，並確保表格對齊與可讀性，使用適當的等寬字體來解決邊框對不齊問題。
@@ -35,8 +36,8 @@ def text_to_image(text: str, font_path: str = "NotoSansMonoCJK-TC-Regular.otf", 
 
     # **選擇適合表格的等寬字體**
     if not os.path.exists(font_path):
-        print("【Debug】找不到字型檔案，改用 `Noto Sans Mono CJK`")
-        font = ImageFont.truetype("NotoSansMonoCJK-TC-Regular.otf", font_size)
+        print("【Debug】找不到字型檔案，改用 `SarasaFixedCL-ExtraLight.ttf` 字型。")
+        font = ImageFont.truetype("SarasaFixedCL-ExtraLight.ttf", font_size)
     else:
         font = ImageFont.truetype(font_path, font_size)
 
@@ -69,3 +70,6 @@ def text_to_image(text: str, font_path: str = "NotoSansMonoCJK-TC-Regular.otf", 
     img.save(img_bytes, format="PNG")
     img_bytes.seek(0)
     return img_bytes
+
+
+

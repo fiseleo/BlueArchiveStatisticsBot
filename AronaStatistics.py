@@ -209,7 +209,48 @@ class AronaStatistics:
 
         print(f"❌ `{stu_name}` 的 S{seasons} 總力戰 沒有在內容中找到", flush=True)
         return None, None
-
-
     
-    
+    def get_student_usage(self, stu_name: str, rank: int) -> str:
+        """
+        根據學生名稱和 Rank 讀取 Excel 檔案 data.xlsx，返回該學生前 10 筆使用率統計。
+        """
+        try:
+            sheet_name = self.get_summary_sheet_name(rank)
+        except Exception as e:
+            return f"❌ 錯誤: {e}"
+
+        try:
+            df = pd.read_excel(self.file_path, sheet_name=sheet_name)
+        except Exception as e:
+            return f"❌ 讀取 Excel 檔案錯誤：{e}"
+
+        # 確保欄位名稱正確
+        df.columns = df.columns.str.strip()
+
+        if 'stdNm' not in df.columns:
+            return "❌ Excel 檔案格式錯誤，缺少 'stdNm' 欄位"
+
+        # 避免 NaN 導致 contains 出錯
+        df = df.dropna(subset=['stdNm'])
+
+        # 檢查學生名稱是否存在
+        student_rows = df[df['stdNm'].astype(str).str.contains(stu_name.strip(), case=False, na=False)]
+        if student_rows.empty:
+            return f"❌ 找不到學生 {stu_name} 的資料。"
+
+        # 取第一筆匹配的學生資料
+        student_row = student_rows.iloc[0]
+
+        # 假設前 5 個欄位為基本資料，其餘欄位為各場使用率
+        usage_cols = student_row.index[5:]
+        usage_data = student_row[usage_cols]
+
+        # 排序使用率數據（降冪），並選出前 20 筆
+        usage_data = usage_data.sort_values(ascending=False).dropna()
+        top10 = usage_data.head(20)
+
+        output_lines = []
+        for col, val in top10.items():
+            output_lines.append(f"**{col}**: {int(val)} 場")
+
+        return "\n".join(output_lines)
