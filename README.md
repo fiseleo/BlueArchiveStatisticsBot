@@ -81,7 +81,7 @@ python bot.py
 
 ## 開發者
 
-- **Jacky Ho** (JavaScript 開發)
+- **Jacky Ho** (JavaScript 開發) [Jacky Ho](https://github.com/jacky1226-csl)
 - **fiseleo** (Python 開發)
 
 
