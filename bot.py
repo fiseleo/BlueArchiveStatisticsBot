@@ -175,10 +175,13 @@ async def statstu(interaction: discord.Interaction, stu_name: str, seasons: int)
         file=discord.File(image_bytes, filename="table.png")
     )
 
+
+
 @bot.tree.command(name="raidline", description="顯示指定賽季的總力戰分數")
 async def raidline(interaction: discord.Interaction, sensons: int):
     await interaction.response.defer()
-    # 1. 從 blue.triple-lab 取得該賽季的 Raid 資料
+
+    # 取得該賽季的 Raid 資料（分數資訊）
     raid_url = f"https://blue.triple-lab.com/raid/{sensons}"
     raid_data = arona.get_json(raid_url)
     if raid_data is None:
@@ -186,7 +189,7 @@ async def raidline(interaction: discord.Interaction, sensons: int):
         return
     rank_results = arona.get_rank_results(raid_data)
 
-    # 2. 從 raidInfo 取得該賽季的詳細資訊（地型、Boss 名稱）
+    # 取得 raidInfo 資料（包含賽季詳細資訊與 Boss 名稱）
     raid_info_url = "https://schaledb.com/data/tw/raids.json"
     raid_info = arona.get_json(raid_info_url)
     if raid_info is None:
@@ -196,19 +199,50 @@ async def raidline(interaction: discord.Interaction, sensons: int):
     if not season_data:
         await interaction.followup.send("無法取得對應的總力戰賽季資訊！")
         return
+
     terrain = season_data.get("Terrain", "未知地型")
     raid_id = season_data.get("RaidId", 0)
     boss_name = arona.get_boss_info(raid_info, raid_id)
     
-    # 組合輸出字串
     header = f"S{sensons} - {terrain} {boss_name} 的總力戰分數"
     embed = discord.Embed(title=header, color=discord.Color.blue())
-    # 依照 arona.RANKS 加入欄位，inline=False 表示每個欄位換行
+
+    # 判斷模式：若 raid_id 為 1 或 5，則為 3min 模式；否則 4min 模式
+    if raid_id in [1, 5]:
+        mode = "3min"
+    else:
+        mode = "4min"
+
+    # 針對每個排名先判斷難度，再計算用時
     for rank in arona.RANKS:
-        embed.add_field(name=f"第{rank}名", value=f"{rank_results[rank]}", inline=False)
+        raw_value = rank_results[rank]
+        try:
+            score = int(raw_value)
+            formatted_score = f"{score:,}"
+        except Exception:
+            formatted_score = raw_value
+            continue
+
+        # 根據 score 與模式判斷難度
+        difficulty = arona.determine_difficulty(score, mode)
+        print(f"[DEBUG] Rank {rank}: score = {score}, mode = {mode}, difficulty = {difficulty}")
+        try:
+            used_time_sec = arona.calculate_used_time(score, difficulty, raid_id)
+            formatted_used_time = arona.format_time(used_time_sec)
+            print(f"[DEBUG] Rank {rank}: used_time_sec = {used_time_sec}, formatted_used_time = {formatted_used_time}")
+        except Exception as e:
+            print(f"[DEBUG] Rank {rank}: calculate_used_time error: {e}")
+            formatted_used_time = "計算錯誤"
+        
+        embed.add_field(
+            name=f"第{rank}名",
+            value=f"{formatted_score}\n({difficulty}難度) (用時 {formatted_used_time})",
+            inline=False
+        )
+
     await interaction.followup.send(embed=embed)
 
-
+# 指令 /eraidline：大決戰分數與用時
 @bot.tree.command(name="eraidline", description="顯示指定賽季的大決戰分數")
 async def eraidline(interaction: discord.Interaction, sensons: int):
     await interaction.response.defer()
@@ -239,6 +273,7 @@ async def eraidline(interaction: discord.Interaction, sensons: int):
     for rank in arona.RANKS:
         embed.add_field(name=f"第{rank}名", value=f"{rank_results[rank]}", inline=False)
     await interaction.followup.send(embed=embed)
+
 
 @bot.tree.command(name="restart", description="🔄 重新啟動 Bot (限管理員)")
 @app_commands.checks.has_permissions(administrator=True)
