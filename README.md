@@ -46,9 +46,13 @@ YOUR_DISCORD_ID_HERE
 ### 3. 運行 Bot
 
 運行 Bot 只需執行以下命令：
-
+(linux)
 ```bash
-python3 bot.py
+python3 bot-linux.py
+```
+(Windows)
+```bash
+py bot.py
 ```
 
 ## 指令列表
@@ -61,6 +65,7 @@ python3 bot.py
 | `/eraid_stats_stu <stu_name> <season> <armor_type>` | 獲取特定角色在大決戰的數據 |
 | `/raidline <season>` | 查詢總力戰的排名門檻分數 |
 | `/eraidline <season>` | 查詢大決戰的排名門檻分數 |
+| `/stuusage <stu_name> <season> `| 取得指定學生前20筆使用率統計
 | `/restart` | 重新啟動 Bot (限管理員) |
 | `/exec` | 執行 Arona AI Helper (限擁有者) |
 

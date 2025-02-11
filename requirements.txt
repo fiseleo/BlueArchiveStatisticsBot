@@ -1,0 +1,6 @@
+discord.py>=2.4.0
+pandas>=2.2.3
+openpyxl>=3.1.5
+requests>=2.32.3
+Pillow>=11.1.0
+rich>=13.9.4
