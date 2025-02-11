@@ -243,7 +243,7 @@ async def raidline(interaction: discord.Interaction, sensons: int):
 
     await interaction.followup.send(embed=embed)
 
-# 指令 /eraidline：大決戰分數與用時
+# 指令 /eraidline：大決戰分數
 @bot.tree.command(name="eraidline", description="顯示指定賽季的大決戰分數")
 async def eraidline(interaction: discord.Interaction, sensons: int):
     await interaction.response.defer()
@@ -288,11 +288,12 @@ async def eraidline(interaction: discord.Interaction, sensons: int):
             continue
         
         
-        breakdown = arona.get_score_breakdown(mode, score)
+        #breakdown = arona.get_score_breakdown(mode, score)
         
         embed.add_field(
             name=f"第{rank}名",
-            value=f"{formatted_score}  ({breakdown}) (參考用)",
+            #value=f"{formatted_score}  ({breakdown}) (參考用)",
+            value=f"{formatted_score}",
             inline=False
         )
     

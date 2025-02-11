@@ -199,7 +199,7 @@ def determine_difficulty(score: int, mode: str) -> str:
             return "???"
     else:
         return "???"
-    
+'''  先不用    
 def get_score_breakdown(mode: str, score: int) -> str:
     """
     根據模式與分數返回分數組合說明字串。
@@ -326,3 +326,4 @@ def get_score_breakdown(mode: str, score: int) -> str:
         parts.append(f"{h}N")
     breakdown_str = "+".join(parts)
     return breakdown_str
+'''
