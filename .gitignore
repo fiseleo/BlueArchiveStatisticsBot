@@ -402,3 +402,7 @@ FodyWeavers.xsd
 
 OWNER_ID.txt
 data.xlsx
+localization.json
+students.json
+*CollectionBG/
+*studentsimage/

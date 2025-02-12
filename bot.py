@@ -12,7 +12,8 @@ import AronaRankLine as arona
 
 
 # 設定 Bot
-intents = discord.Intents.default()
+intents = discord.Intents.all()
+
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # 確保 `data.xlsx` 存在
@@ -26,6 +27,7 @@ arona_stats = AronaStatistics("data.xlsx")
 @bot.event
 async def on_ready():
     print(f'✅ 已登入：{bot.user}')
+    await bot.change_presence(status=discord.Status.online)
     try:
         synced = await bot.tree.sync()
         print(f"🔄 成功同步 {len(synced)} 個應用程式指令")
