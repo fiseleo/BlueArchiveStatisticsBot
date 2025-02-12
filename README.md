@@ -79,11 +79,13 @@ py bot.py
 ├── bot.py                 # Discord Bot 主程式
 ├── arona_ai_helper.py     # 爬取最新的數據並生成 Excel
 ├── utils.py               # 提供表格渲染、圖片轉換等工具函數
+├── ImageFactory.py        # 提供生成視覺化圖片等相關功能
 ├── requirements.txt       # 依賴套件列表
 ├── TOKEN.txt              # Discord Bot Token
 ├── OWNER_ID.txt           # Bot 擁有者 ID
 ├── data.xlsx              # 數據文件
 ├── CollectionBG           # 背景圖
+├── iconimages             # Icon圖片
 └── studentsimage          # 學生圖片
 ```
 
@@ -95,3 +97,4 @@ py bot.py
 
 ![alt text](image.png)
 ![alt text](image-1.png)
+![alt text](image-2.png)

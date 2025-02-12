@@ -151,11 +151,10 @@ class AronaStatistics:
                 print(data_rows, flush=True)
                 Two_dimensional_Arrays_data = get_student_usage_stats(data_rows)
                 print(Two_dimensional_Arrays_data, flush=True)
-                stats_text = generate_rich_table(title, headers, data_rows)
+                #stats_text = generate_rich_table(title, headers, data_rows)
 
-                
-                
-                return sheet, stats_text
+                raid_title = title
+                return sheet, raid_title, Two_dimensional_Arrays_data
 
         print(f"❌ `{stu_name}` 的 S{seasons} {armor_type} 大決戰 沒有在內容中找到", flush=True)
         return None, None
@@ -208,10 +207,11 @@ class AronaStatistics:
                 print(data_rows, flush=True)
                 Two_dimensional_Arrays_data = get_student_usage_stats(data_rows)
                 print(Two_dimensional_Arrays_data, flush=True)
-                stats_text = generate_rich_table(title, headers, data_rows)
-
-                print("✅ 成功生成表格，準備發送 Discord 訊息！", flush=True)
-                return sheet, stats_text
+                #stats_text = generate_rich_table(title, headers, data_rows)
+                
+                raid_title = title
+                #print("✅ 資料成功處理完成，準備發送 Discord 訊息！", flush=True)
+                return sheet, raid_title, Two_dimensional_Arrays_data
 
         print(f"❌ `{stu_name}` 的 S{seasons} 總力戰 沒有在內容中找到", flush=True)
         return None, None
