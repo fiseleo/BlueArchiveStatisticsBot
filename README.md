@@ -27,7 +27,8 @@ BlueArchiveStatisticsBot 是一款用於分析《Blue Archive》遊戲內總力�
 
 ```bash
 pip install -r requirements.txt
-python3 arona_ai_helper.py 
+python3 arona_ai_helper.py
+python3 DownloadSchaleDBData.py
 ```
 ### 2. 設定 Bot Token
 
@@ -82,6 +83,8 @@ py bot.py
 ├── TOKEN.txt              # Discord Bot Token
 ├── OWNER_ID.txt           # Bot 擁有者 ID
 └── data.xlsx              # 數據文件
+└──CollectionBG            # 背景圖
+└──studentsimage           # 學生圖片
 ```
 
 ## 開發者
