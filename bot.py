@@ -7,10 +7,21 @@ import os
 import sys
 import json
 import asyncio
-from utils import text_to_image 
 import subprocess
 import AronaRankLine as arona
 
+
+# 載入學生數據
+students_json_path = "students.json"
+
+# 檢查 JSON 檔案是否存在
+if os.path.exists(students_json_path):
+    with open(students_json_path, "r", encoding="utf-8") as file:
+        all_student_data = json.load(file)
+    print("✅ 成功載入 students.json")
+else:
+    print("⚠ 錯誤：找不到 students.json，請確認檔案是否存在！")
+    all_student_data = {}  # 避免變數未定義錯誤
 
 
 # 設定 Bot
@@ -22,6 +33,16 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 if not os.path.exists("data.xlsx"):
     print("❌ 錯誤：找不到 `data.xlsx`，請確認檔案已生成！")
     exit(1)
+
+id_name_mapping_path = "id_name_mapping.json"
+
+if os.path.exists(id_name_mapping_path):
+    with open(id_name_mapping_path, "r", encoding="utf-8") as file:
+        id_name_mapping = json.load(file)
+    print("✅ 成功載入 id_name_mapping.json")
+else:
+    print("⚠ 錯誤：找不到 id_name_mapping.json，請確認檔案是否存在！")
+    id_name_mapping = {}
 
 # 讀取 Excel
 arona_stats = AronaStatistics("data.xlsx")
@@ -119,31 +140,31 @@ async def eraid_stats(interaction: discord.Interaction, season: int, armor_type:
 async def statstu(interaction: discord.Interaction, stu_name: str, seasons: int, armor_type: str):
     await interaction.response.defer()
 
+    # **查找 student_id**
+    student_id = next((sid for sid, name in id_name_mapping.items() if name == stu_name), None)
+    if student_id is None:
+        await interaction.followup.send(f"⚠ 找不到 `{stu_name}` 的對應 ID")
+        return
+
     # 呼叫 AronaStatistics 的方法
-    sheet_name, raid_title, Two_dimensional_Arrays_data = arona_stats.get_student_stats(stu_name, seasons, armor_type)
+    sheet_name, raid_title, Two_dimensional_Arrays_data = arona_stats.get_student_stats(student_id, seasons, armor_type)
     if Two_dimensional_Arrays_data is None:
         await interaction.followup.send(f"⚠ 找不到 `{stu_name}` `S{seasons}` `{armor_type}` `大決戰` 的數據")
         return
 
-    # Debug 印出表格文字
-    #print("【Debug】最終表格文字內容：\n", stats_text)
-
-    student_id = 10000
-    #獲取學生資料
-    with open("students.json","r",encoding='utf-8') as i:                   
-        all_student_data = json.load(i)
-    student_info = all_student_data.get(str(student_id),None)
+    # 獲取學生資料
+    student_info = all_student_data.get(str(student_id), None)
     if student_info is None:
-        await interaction.followup.send(f"⚠ 錯誤：找不到 `{stu_name}` 的相關資料")
+        await interaction.followup.send(f"⚠ 錯誤：找不到 `{stu_name}` (`{student_id}`) 的相關資料")
         return
 
     # 轉換數據為圖片
-    image_bytes = ImageFactory.StudentUsageImageGenerator(student_info,Two_dimensional_Arrays_data)
+    image_bytes = ImageFactory.StudentUsageImageGenerator(student_info, Two_dimensional_Arrays_data)
 
     # **建立 Discord Embed**
     embed = discord.Embed(
-        title=f"📊 {stu_name} - {sheet_name} 的使用數據",
-        description=f"查詢數據： {raid_title}({armor_type})\n詳情請參考下方圖片：",
+        title=f"📊 {stu_name} 的使用數據",
+        description=f"查詢數據： {raid_title}\n詳情請參考下方圖片：",
         color=discord.Color.purple()
     )
 
@@ -157,34 +178,33 @@ async def statstu(interaction: discord.Interaction, stu_name: str, seasons: int,
     )
 
 @bot.tree.command(name="raid_stats_stu", description="取得特定角色的總力戰數據")
-
 async def statstu(interaction: discord.Interaction, stu_name: str, seasons: int):
     await interaction.response.defer()
 
+    # **查找 student_id**
+    student_id = next((sid for sid, name in id_name_mapping.items() if name == stu_name), None)
+    if student_id is None:
+        await interaction.followup.send(f"⚠ 找不到 `{stu_name}` 的對應 ID")
+        return
+
     # 呼叫 AronaStatistics 的方法
-    sheet_name, raid_title, Two_dimensional_Arrays_data = arona_stats.get_student_stats_raid(stu_name, seasons)
+    sheet_name, raid_title, Two_dimensional_Arrays_data = arona_stats.get_student_stats_raid(student_id, seasons)
     if Two_dimensional_Arrays_data is None:
         await interaction.followup.send(f"⚠ 找不到 `{stu_name}` `S{seasons}` `總力戰` 的數據")
         return
 
-    # Debug 印出表格文字
-    #print("【Debug】最終表格文字內容：\n", stats_text)
-
-    student_id = 10000
-    #獲取學生資料
-    with open("students.json","r",encoding='utf-8') as i:                   
-        all_student_data = json.load(i)
-    student_info = all_student_data.get(str(student_id),None)
+    # 獲取學生資料
+    student_info = all_student_data.get(str(student_id), None)
     if student_info is None:
-        await interaction.followup.send(f"⚠ 錯誤：找不到 `{stu_name}` 的相關資料")
+        await interaction.followup.send(f"⚠ 錯誤：找不到 `{stu_name}` (`{student_id}`) 的相關資料")
         return
 
     # 轉換數據為圖片
-    image_bytes = ImageFactory.StudentUsageImageGenerator(student_info,Two_dimensional_Arrays_data)
+    image_bytes = ImageFactory.StudentUsageImageGenerator(student_info, Two_dimensional_Arrays_data)
 
     # **建立 Discord Embed**
     embed = discord.Embed(
-        title=f"📊 {stu_name} - {sheet_name} 的使用數據",
+        title=f"📊 {stu_name} 的使用數據",
         description=f"查詢數據： {raid_title}\n詳情請參考下方圖片：",
         color=discord.Color.purple()
     )
@@ -197,6 +217,8 @@ async def statstu(interaction: discord.Interaction, stu_name: str, seasons: int)
         embed=embed,
         file=discord.File(image_bytes, filename="student_usage_table.png")
     )
+
+
 
 
 
@@ -407,6 +429,51 @@ async def exec_script(interaction: discord.Interaction):
     except Exception as e:
         await interaction.followup.send(f"❌ 腳本執行失敗：{e}")
 
+@bot.tree.command(name="exec-download-schaledb-data", description="執行下載 SchaleDB 資料腳本（只有作者能用）")
+async def exec_script(interaction: discord.Interaction):
+    """執行本地 `arona_ai_helper.py`，並在結束後重啟 Bot"""
+    await interaction.response.defer(ephemeral=True)  # 🔹 **輸出只有發送者可見**
+
+    # **權限檢查：只有 Bot 擁有者能執行**
+    if interaction.user.id != OWNER_ID:
+        await interaction.followup.send("⚠ 你沒有權限執行此命令！")
+        return
+
+    # **指定 `DownloadSchaleDBData.py` 路徑**
+    script_path = os.path.join(os.getcwd(), "DownloadSchaleDBData.py")
+    if not os.path.exists(script_path):
+        await interaction.followup.send("❌ 找不到 `DownloadSchaleDBData.py`，請確認檔案是否存在。")
+        return
+
+    try:
+        # **使用 subprocess.Popen 來執行腳本，沒有超時限制**
+        process = subprocess.Popen(["python", script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        # **等待腳本執行結束**
+        stdout, stderr = process.communicate()
+
+        # **合併標準輸出與錯誤輸出**
+        output = (stdout + "\n" + stderr).strip()
+
+        if not output:
+            output = "✅ 腳本執行成功，但沒有輸出。"
+
+        # **限制輸出長度（避免過長）**
+        if len(output) > 1900:
+            output = output[:1900] + "\n...(輸出過長，已截斷)"
+
+        # **回傳執行結果**
+        embed = discord.Embed(title=f"🖥 執行 `DownloadSchaleDBData.py` 結果", description=f"```\n{output}\n```", color=discord.Color.blue())
+        await interaction.followup.send(embed=embed)
+
+        # **通知使用者 bot 即將重啟**
+        await interaction.followup.send("🔄 **Arona AI Helper 執行完畢，正在重新啟動 Bot...**")
+
+        # **重啟 bot**
+        restart_bot()
+
+    except Exception as e:
+        await interaction.followup.send(f"❌ 腳本執行失敗：{e}")
 def restart_bot():
     """使用 `execv` 重新啟動 Bot"""
     python = sys.executable

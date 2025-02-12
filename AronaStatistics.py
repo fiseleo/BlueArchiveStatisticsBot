@@ -1,6 +1,6 @@
 import pandas as pd
 import re
-from utils import generate_rich_table, get_student_usage_stats
+from utils import  get_student_usage_stats
 
 class AronaStatistics:
     """負責讀取 `data.xlsx` 並處理 RAID/ERAID 數據"""
@@ -99,23 +99,24 @@ class AronaStatistics:
             )
         return []
 
-    def get_student_stats(self, stu_name: str, seasons: int, armor_type: str):
+    
+    def get_student_stats(self, student_id: str, seasons: int, armor_type: str):
         """
-        獲取 stu_name 在 S{seasons} {armor_type} 大決戰 的數據，並回傳格式化表格。
+        獲取 student_id 在 S{seasons} {armor_type} 大決戰 的數據，並回傳格式化表格。
         """
         matching_sheets = []
-        print(f"🔍 搜尋 `{stu_name}` 相關的工作表...", flush=True)
+        print(f"🔍 搜尋 `{student_id}` 相關的工作表...", flush=True)
 
         for sheet in self.xlsx.sheet_names:
-            if stu_name in sheet:
+            if student_id in sheet:
                 matching_sheets.append(sheet)
-                print(f"✅ 找到 `{stu_name}` 相關的工作表: {sheet}", flush=True)
+                print(f"✅ 找到 `{student_id}` 相關的工作表: {sheet}", flush=True)
 
         if not matching_sheets:
-            print(f"❌ 找不到 `{stu_name}` 相關的工作表", flush=True)
+            print(f"❌ 找不到 `{student_id}` 相關的工作表", flush=True)
             return None, None
 
-        print(f"🔍 在 `{stu_name}` 的工作表內，搜尋 `S{seasons}`, `{armor_type}`, `大決戰` 是否出現在內容中...", flush=True)
+        print(f"🔍 在 `{student_id}` 的工作表內，搜尋 `S{seasons}`, `{armor_type}`, `大決戰` 是否出現在內容中...", flush=True)
 
         for sheet in matching_sheets:
             df_full = pd.read_excel(self.xlsx, sheet_name=sheet, header=None)
@@ -130,49 +131,43 @@ class AronaStatistics:
                     print(f"🎯 `{sheet}` 內部找到 `S{seasons} {armor_type} 大決戰` (位於第 {found_row+1} 行)", flush=True)
                     continue
 
-                # **改進：只要出現 `SXX - ... 總力戰` / `SXX - ... 大決戰`，都視為新的區塊，進行截斷**
                 if found_row is not None and re.search(r"S\d+ - .* (大決戰|總力戰)", row_str):
                     end_row = index
                     print(f"⏹ 截斷 `{sheet}` 的數據 (結束於第 {end_row+1} 行)", flush=True)
                     break
 
             if found_row is not None:
-                # 擷取 DataFrame 區間
                 df_section = df_full.iloc[found_row:end_row].reset_index(drop=True) if end_row else df_full.iloc[found_row:].reset_index(drop=True)
-
-                # 清理 NaN 值
                 df_section = df_section.dropna(how="all", axis=1).dropna(how="all", axis=0).astype(str)
 
-                # 假設第一列為標題，第二列為欄位名稱，後續為資料內容
                 title = df_section.iloc[0, 0].strip()
+                title = self.translate_environment(title)
                 headers = [str(x).strip() for x in df_section.iloc[1]]
                 data_rows = df_section.iloc[2:].values.tolist()
 
                 print(data_rows, flush=True)
                 Two_dimensional_Arrays_data = get_student_usage_stats(data_rows)
-                print(Two_dimensional_Arrays_data, flush=True)
-                #stats_text = generate_rich_table(title, headers, data_rows)
+                return sheet, title, Two_dimensional_Arrays_data
 
-                raid_title = title
-                return sheet, raid_title, Two_dimensional_Arrays_data
-
-        print(f"❌ `{stu_name}` 的 S{seasons} {armor_type} 大決戰 沒有在內容中找到", flush=True)
         return None, None
-    
-    def get_student_stats_raid(self, stu_name: str, seasons: int):
+
+    def get_student_stats_raid(self, student_id: str, seasons: int):
+        """
+        獲取 student_id 在 S{seasons} 總力戰 的數據，並回傳格式化表格。
+        """
         matching_sheets = []
-        print(f"🔍 搜尋 `{stu_name}` 相關的工作表...", flush=True)
+        print(f"🔍 搜尋 `{student_id}` 相關的工作表...", flush=True)
 
         for sheet in self.xlsx.sheet_names:
-            if stu_name in sheet:
+            if student_id in sheet:
                 matching_sheets.append(sheet)
-                print(f"✅ 找到 `{stu_name}` 相關的工作表: {sheet}", flush=True)
+                print(f"✅ 找到 `{student_id}` 相關的工作表: {sheet}", flush=True)
 
         if not matching_sheets:
-            print(f"❌ 找不到 `{stu_name}` 相關的工作表", flush=True)
+            print(f"❌ 找不到 `{student_id}` 相關的工作表", flush=True)
             return None, None
 
-        print(f"🔍 在 `{stu_name}` 的工作表內，搜尋 `S{seasons}`, `總力戰` 是否出現在內容中...", flush=True)
+        print(f"🔍 在 `{student_id}` 的工作表內，搜尋 `S{seasons}`, `總力戰` 是否出現在內容中...", flush=True)
 
         for sheet in matching_sheets:
             df_full = pd.read_excel(self.xlsx, sheet_name=sheet, header=None)
@@ -187,7 +182,7 @@ class AronaStatistics:
                     print(f"🎯 `{sheet}` 內部找到 `S{seasons} 總力戰` (位於第 {found_row+1} 行)", flush=True)
                     continue
 
-                # **改進：同時檢測 `SXX - ... 大決戰` 以及 `SXX - ... 總力戰` 來截斷**
+                # **檢測 `SXX - ... 大決戰` 或 `SXX - ... 總力戰` 來截斷數據**
                 if found_row is not None and re.search(r"S\d+ - .* (大決戰|總力戰)", row_str):
                     end_row = index
                     print(f"⏹ 截斷 `{sheet}` 的數據 (結束於第 {end_row+1} 行)", flush=True)
@@ -200,21 +195,20 @@ class AronaStatistics:
                 df_section = df_section.dropna(how="all", axis=1).dropna(how="all", axis=0).astype(str)
 
                 title = df_section.iloc[0, 0].strip()
+                title = self.translate_environment(title)
                 headers = [str(x).strip() for x in df_section.iloc[1]]
                 data_rows = df_section.iloc[2:].values.tolist()
 
-                # 利用 rich 產生表格字串
                 print(data_rows, flush=True)
                 Two_dimensional_Arrays_data = get_student_usage_stats(data_rows)
                 print(Two_dimensional_Arrays_data, flush=True)
-                #stats_text = generate_rich_table(title, headers, data_rows)
-                
-                raid_title = title
-                #print("✅ 資料成功處理完成，準備發送 Discord 訊息！", flush=True)
-                return sheet, raid_title, Two_dimensional_Arrays_data
 
-        print(f"❌ `{stu_name}` 的 S{seasons} 總力戰 沒有在內容中找到", flush=True)
+                return sheet, title, Two_dimensional_Arrays_data
+
+        print(f"❌ `{student_id}` 的 S{seasons} 總力戰 沒有在內容中找到", flush=True)
         return None, None
+
+    
     
     def get_student_usage(self, stu_name: str, rank: int) -> str:
         """
@@ -260,3 +254,32 @@ class AronaStatistics:
             output_lines.append(f"**{col}**: {int(val)} 場")
 
         return "\n".join(output_lines)
+    
+
+    def translate_environment(self, title: str) -> str:
+        """
+        將戰鬥環境類型從英文翻譯為中文
+        """
+        if not isinstance(title, str):  # 確保 title 是字串
+            print(f"⚠ 警告：title 不是字串，跳過翻譯 ({title})")
+            return title  # 如果不是字串，直接返回原始值
+
+        translations = {
+            "Outdoor": "野戰",
+            "Street": "城鎮戰",
+            "Indoor": "室內戰",
+            "Unarmed": "神祕裝甲",
+            "HeavyArmor": "重裝甲",
+            "LightArmor": "輕裝甲",
+            "ElasticArmor": "彈性裝甲",
+        }
+
+        try:
+            for eng, zh in translations.items():
+                title = title.replace(eng, zh)  # 替換英文為中文
+            return title
+        except Exception as e:
+            print(f"⚠ 翻譯錯誤：{e}")
+            return title  # 發生錯誤時，返回原始值
+
+

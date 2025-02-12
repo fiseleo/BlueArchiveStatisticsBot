@@ -320,7 +320,7 @@ def main():
                 data_array.append({})
         # 這裡設定學生工作表的欄位順序
         student_header = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
-        sheet_title = format_sheet_name(f"{std_id}-{std_info.get(std_id, {}).get('Name', '')}")
+        sheet_title = format_sheet_name(f"{std_id}")
         ws = wb.create_sheet(title=sheet_title)
         # 依序寫入每一列（不額外產生表頭）
         for row_data in data_array:

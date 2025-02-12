@@ -27,6 +27,7 @@ with open("students.json", "r", encoding="utf-8") as file:
 # 資料夾名稱
 students_folder = "studentsimage"
 bg_folder = "CollectionBG"
+output_json_path = "id_name_mapping.json"
 
 # 確保資料夾存在
 os.makedirs(students_folder, exist_ok=True)
@@ -70,3 +71,9 @@ with ThreadPoolExecutor(max_workers=10) as executor:  # 設置最多 10 個並�
             print(result)
 
 print("所有圖片下載完成。")
+
+
+id_name_mapping = {str(student["Id"]): student["Name"] for student in students.values()}
+with open(output_json_path, "w", encoding="utf-8") as file:
+    json.dump(id_name_mapping, file, ensure_ascii=False, indent=4)
+print(f"已成功生成 {output_json_path}")

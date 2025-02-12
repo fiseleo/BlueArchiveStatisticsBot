@@ -25,10 +25,18 @@ BlueArchiveStatisticsBot 是一款用於分析《Blue Archive》遊戲內總力�
 
 請確保你的環境已安裝 Python (>=3.8)，然後執行以下命令來安裝所需套件：
 
+(linux)
 ```bash
 pip install -r requirements.txt
 python3 arona_ai_helper.py
 python3 DownloadSchaleDBData.py
+```
+
+(Windows)
+```bash
+pip install -r requirements.txt
+python arona_ai_helper.py
+python DownloadSchaleDBData.py
 ```
 ### 2. 設定 Bot Token
 
@@ -47,6 +55,7 @@ YOUR_DISCORD_ID_HERE
 ### 3. 運行 Bot
 
 運行 Bot 只需執行以下命令：
+
 (linux)
 ```bash
 python3 bot-linux.py
@@ -68,7 +77,8 @@ py bot.py
 | `/eraidline <season>` | 查詢大決戰的排名門檻分數 |
 | `/stuusage <stu_name> <season> `| 取得指定學生前20筆使用率統計
 | `/restart` | 重新啟動 Bot (限管理員) |
-| `/exec` | 執行 Arona AI Helper (限擁有者) |
+| `/exec-arona-ai-helper` | 執行 Arona AI Helper (限擁有者) |
+| `/exec-download-schaledb-data` | 執行下載 SchaleDB 資料腳本 (限擁有者) |
 
 ## 檔案結構
 
@@ -86,15 +96,16 @@ py bot.py
 ├── data.xlsx              # 數據文件
 ├── CollectionBG           # 背景圖
 ├── iconimages             # Icon圖片
-└── studentsimage          # 學生圖片
+├── studentsimage          # 學生圖片
+└── id_name_mapping.json   # 學生ID 轉換 學生名子
 ```
 
 ## 開發者
 
 - **Jacky Ho** (JavaScript 開發) [Jacky Ho](https://github.com/jacky1226-csl)
 - **fiseleo** (Python 開發)
+- **YourNameMitsuha** (圖片開發)
 
 
 ![alt text](image.png)
-![alt text](image-1.png)
 ![alt text](image-2.png)
