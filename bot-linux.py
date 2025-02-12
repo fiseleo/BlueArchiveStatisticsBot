@@ -2,8 +2,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from AronaStatistics import AronaStatistics
+from ImageFactory import ImageFactory
 import os
 import sys
+import json
 import asyncio
 from utils import text_to_image 
 import subprocess
@@ -116,31 +118,40 @@ async def statstu(interaction: discord.Interaction, stu_name: str, seasons: int,
     await interaction.response.defer()
 
     # 呼叫 AronaStatistics 的方法
-    sheet_name, stats_text = arona_stats.get_student_stats(stu_name, seasons, armor_type)
-    if stats_text is None:
+    sheet_name, raid_title, Two_dimensional_Arrays_data = arona_stats.get_student_stats(stu_name, seasons, armor_type)
+    if Two_dimensional_Arrays_data is None:
         await interaction.followup.send(f"⚠ 找不到 `{stu_name}` `S{seasons}` `{armor_type}` `大決戰` 的數據")
         return
 
     # Debug 印出表格文字
-    print("【Debug】最終表格文字內容：\n", stats_text)
+    #print("【Debug】最終表格文字內容：\n", stats_text)
 
-    # 轉換文字為圖片
-    image_bytes = text_to_image(stats_text, font_path="SarasaFixedCL-ExtraLight.ttf", font_size=42)
+    student_id = 10000
+    #獲取學生資料
+    with open("students.json","r",encoding='utf-8') as i:                   
+        all_student_data = json.load(i)
+    student_info = all_student_data.get(str(student_id),None)
+    if student_info is None:
+        await interaction.followup.send(f"⚠ 錯誤：找不到 `{stu_name}` 的相關資料")
+        return
+
+    # 轉換數據為圖片
+    image_bytes = ImageFactory.StudentUsageImageGenerator(student_info,Two_dimensional_Arrays_data)
 
     # **建立 Discord Embed**
     embed = discord.Embed(
         title=f"📊 {stu_name} - {sheet_name} 的使用數據",
-        description="請參考下方表格圖片：",
+        description=f"查詢數據： {raid_title}({armor_type})\n詳情請參考下方圖片：",
         color=discord.Color.purple()
     )
 
     # **將圖片附加到 Embed**
-    embed.set_image(url="attachment://table.png")
+    embed.set_image(url="attachment://student_usage_table.png")
 
     # **發送 Embed 與圖片**
     await interaction.followup.send(
         embed=embed,
-        file=discord.File(image_bytes, filename="table.png")
+        file=discord.File(image_bytes, filename="student_usage_table.png")
     )
 
 @bot.tree.command(name="raid_stats_stu", description="取得特定角色的總力戰數據")
@@ -149,31 +160,40 @@ async def statstu(interaction: discord.Interaction, stu_name: str, seasons: int)
     await interaction.response.defer()
 
     # 呼叫 AronaStatistics 的方法
-    sheet_name, stats_text = arona_stats.get_student_stats_raid(stu_name, seasons)
-    if stats_text is None:
+    sheet_name, raid_title, Two_dimensional_Arrays_data = arona_stats.get_student_stats_raid(stu_name, seasons)
+    if Two_dimensional_Arrays_data is None:
         await interaction.followup.send(f"⚠ 找不到 `{stu_name}` `S{seasons}` `總力戰` 的數據")
         return
 
     # Debug 印出表格文字
-    print("【Debug】最終表格文字內容：\n", stats_text)
+    #print("【Debug】最終表格文字內容：\n", stats_text)
 
-    # 轉換文字為圖片
-    image_bytes = text_to_image(stats_text, font_path="SarasaFixedCL-ExtraLight.ttf", font_size=42)
+    student_id = 10000
+    #獲取學生資料
+    with open("students.json","r",encoding='utf-8') as i:                   
+        all_student_data = json.load(i)
+    student_info = all_student_data.get(str(student_id),None)
+    if student_info is None:
+        await interaction.followup.send(f"⚠ 錯誤：找不到 `{stu_name}` 的相關資料")
+        return
+
+    # 轉換數據為圖片
+    image_bytes = ImageFactory.StudentUsageImageGenerator(student_info,Two_dimensional_Arrays_data)
 
     # **建立 Discord Embed**
     embed = discord.Embed(
         title=f"📊 {stu_name} - {sheet_name} 的使用數據",
-        description="請參考下方表格圖片：",
+        description=f"查詢數據： {raid_title}\n詳情請參考下方圖片：",
         color=discord.Color.purple()
     )
 
     # **將圖片附加到 Embed**
-    embed.set_image(url="attachment://table.png")
+    embed.set_image(url="attachment://student_usage_table.png")
 
     # **發送 Embed 與圖片**
     await interaction.followup.send(
         embed=embed,
-        file=discord.File(image_bytes, filename="table.png")
+        file=discord.File(image_bytes, filename="student_usage_table.png")
     )
 
 
