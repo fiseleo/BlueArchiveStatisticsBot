@@ -82,9 +82,9 @@ py bot.py
 ├── requirements.txt       # 依賴套件列表
 ├── TOKEN.txt              # Discord Bot Token
 ├── OWNER_ID.txt           # Bot 擁有者 ID
-└── data.xlsx              # 數據文件
-└──CollectionBG            # 背景圖
-└──studentsimage           # 學生圖片
+├── data.xlsx              # 數據文件
+├── CollectionBG           # 背景圖
+└── studentsimage          # 學生圖片
 ```
 
 ## 開發者

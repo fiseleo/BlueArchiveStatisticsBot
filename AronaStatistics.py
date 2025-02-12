@@ -1,6 +1,6 @@
 import pandas as pd
 import re
-from utils import generate_rich_table
+from utils import generate_rich_table, get_student_usage_stats
 
 class AronaStatistics:
     """負責讀取 `data.xlsx` 並處理 RAID/ERAID 數據"""
@@ -148,10 +148,13 @@ class AronaStatistics:
                 headers = [str(x).strip() for x in df_section.iloc[1]]
                 data_rows = df_section.iloc[2:].values.tolist()
 
-                # 利用 rich 產生表格字串
+                print(data_rows, flush=True)
+                Two_dimensional_Arrays_data = get_student_usage_stats(data_rows)
+                print(Two_dimensional_Arrays_data, flush=True)
                 stats_text = generate_rich_table(title, headers, data_rows)
 
-                print("✅ 成功生成表格，準備發送 Discord 訊息！", flush=True)
+                
+                
                 return sheet, stats_text
 
         print(f"❌ `{stu_name}` 的 S{seasons} {armor_type} 大決戰 沒有在內容中找到", flush=True)
@@ -202,6 +205,9 @@ class AronaStatistics:
                 data_rows = df_section.iloc[2:].values.tolist()
 
                 # 利用 rich 產生表格字串
+                print(data_rows, flush=True)
+                Two_dimensional_Arrays_data = get_student_usage_stats(data_rows)
+                print(Two_dimensional_Arrays_data, flush=True)
                 stats_text = generate_rich_table(title, headers, data_rows)
 
                 print("✅ 成功生成表格，準備發送 Discord 訊息！", flush=True)
