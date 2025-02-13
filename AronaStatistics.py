@@ -234,7 +234,7 @@ class AronaStatistics:
         df = df.dropna(subset=['stdNm'])
 
         # 檢查學生名稱是否存在
-        student_rows = df[df['stdNm'].astype(str).str.contains(stu_name.strip(), case=False, na=False)]
+        student_rows = df[df['stdNm'].astype(str).str.contains(stu_name.strip(), case=False, na=False, regex=False)]
         if student_rows.empty:
             return f"❌ 找不到學生 {stu_name} 的資料。"
 
