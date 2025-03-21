@@ -371,33 +371,7 @@ async def stuusage(interaction: discord.Interaction, stu_name: str, rank: int):
 
     await interaction.followup.send(embed=embed)
 
-@bot.tree.command(name="stuusage", description="取得指定學生前20筆使用率統計")
-async def stuusage(interaction: discord.Interaction, stu_name: str, rank: int):
-    """
-    Discord 指令:
-      /stuusage stu_name: "某某學生" rank: 1000
-    讀取 Excel 中指定 Rank 工作表，查找該學生的前 20 項使用率數據，並回應到 Discord 頻道。
-    """
-    await interaction.response.defer()  # 避免超時
 
-    # 避免阻塞主線程，使用 asyncio.to_thread()
-    result = await asyncio.to_thread(arona_stats.get_student_usage, stu_name, rank)
-
-    # 建立 Discord Embed 物件
-    embed = discord.Embed(
-        title=f"📊 {stu_name} 的使用率 來自 {get_rank_range_str(rank)}" ,
-        color=discord.Color.blue()
-    )
-
-    # 如果找不到學生，顯示錯誤訊息
-    if "❌" in result:
-        embed.description = result
-    else:
-        embed.description = "前 20 項最高使用率："
-        for line in result.split("\n"):
-            embed.add_field(name="\u200B", value=line, inline=False)  # \u200B 是空白字符
-
-    await interaction.followup.send(embed=embed)
 
 
 class PaginationView(discord.ui.View):
