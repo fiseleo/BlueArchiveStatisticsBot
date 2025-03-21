@@ -9,11 +9,14 @@ import json
 import asyncio
 import subprocess
 import AronaRankLine as arona
-
+from typing import Optional
+from utils import csv_to_json, replace_student_names
+from typing import Optional
 
 
 
 # 載入學生數據
+url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1hFKXsxRA06SbB84DTe6gKcOympw3dKnDL2NMLgl7dqwnjy4SDcOBLbrRFbfkoZ_T3LUxWQo_KDeh/pub?output=csv"
 students_json_path = "students.json"
 
 # 檢查 JSON 檔案是否存在
@@ -367,6 +370,206 @@ async def stuusage(interaction: discord.Interaction, stu_name: str, rank: int):
             embed.add_field(name="\u200B", value=line, inline=False)  # \u200B 是空白字符
 
     await interaction.followup.send(embed=embed)
+
+@bot.tree.command(name="stuusage", description="取得指定學生前20筆使用率統計")
+async def stuusage(interaction: discord.Interaction, stu_name: str, rank: int):
+    """
+    Discord 指令:
+      /stuusage stu_name: "某某學生" rank: 1000
+    讀取 Excel 中指定 Rank 工作表，查找該學生的前 20 項使用率數據，並回應到 Discord 頻道。
+    """
+    await interaction.response.defer()  # 避免超時
+
+    # 避免阻塞主線程，使用 asyncio.to_thread()
+    result = await asyncio.to_thread(arona_stats.get_student_usage, stu_name, rank)
+
+    # 建立 Discord Embed 物件
+    embed = discord.Embed(
+        title=f"📊 {stu_name} 的使用率 來自 {get_rank_range_str(rank)}" ,
+        color=discord.Color.blue()
+    )
+
+    # 如果找不到學生，顯示錯誤訊息
+    if "❌" in result:
+        embed.description = result
+    else:
+        embed.description = "前 20 項最高使用率："
+        for line in result.split("\n"):
+            embed.add_field(name="\u200B", value=line, inline=False)  # \u200B 是空白字符
+
+    await interaction.followup.send(embed=embed)
+
+
+class PaginationView(discord.ui.View):
+    def __init__(self, results: list, page_size: int = 5):
+        super().__init__(timeout=180)  # 互動視窗 3 分鐘後失效
+        self.results = results
+        self.page_size = page_size
+        self.current_page = 0
+        # 計算總頁數
+        self.max_page = (len(results) - 1) // page_size if results else 0
+
+    def create_embed(self) -> discord.Embed:
+        """根據 current_page 產生對應頁面的 Embed。"""
+        embed = discord.Embed(title="搜尋結果", color=discord.Color.blue())
+
+        start_index = self.current_page * self.page_size
+        end_index = start_index + self.page_size
+        page_data = self.results[start_index:end_index]
+
+        if not page_data:
+            # 理論上若有 results，就不會拿到空
+            embed.description = "沒有找到符合條件的結果。"
+            return embed
+        
+        # 建立每一筆結果的欄位
+        for idx, item in enumerate(page_data, start=start_index + 1):
+            field_value = (
+                f"分數：{item['score']}\n"
+                f"學生：{'、'.join(item['students'])}\n"
+                f"URL：{item['URL']}"
+            )
+            embed.add_field(name=f"結果 {idx}", value=field_value, inline=False)
+
+        # 顯示目前頁碼
+        embed.set_footer(text=f"頁數：{self.current_page + 1} / {self.max_page + 1}")
+        return embed
+
+    @discord.ui.button(label="上一頁", style=discord.ButtonStyle.secondary)
+    async def previous_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """上一頁按鈕"""
+        if self.current_page > 0:
+            self.current_page -= 1
+        await interaction.response.edit_message(embed=self.create_embed(), view=self)
+
+    @discord.ui.button(label="下一頁", style=discord.ButtonStyle.secondary)
+    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """下一頁按鈕"""
+        if self.current_page < self.max_page:
+            self.current_page += 1
+        await interaction.response.edit_message(embed=self.create_embed(), view=self)
+
+@bot.tree.command(name="search-video", description="依據條件搜尋影片資料")
+@app_commands.choices(battle_field=[
+    app_commands.Choice(name="室內戰", value="室內戰"),
+    app_commands.Choice(name="野戰", value="野戰"),
+    app_commands.Choice(name="城鎮戰", value="城鎮戰")
+])
+@app_commands.choices(boss_name=[
+    app_commands.Choice(name="薇娜", value="薇娜"),
+    app_commands.Choice(name="赫賽德", value="赫賽德"),
+    app_commands.Choice(name="白&黑", value="白&黑"),
+    app_commands.Choice(name="耶羅尼姆斯", value="耶羅尼姆斯"),
+    app_commands.Choice(name="KAITEN FX Mk.0", value="KAITEN FX Mk.0"),
+    app_commands.Choice(name="佩洛洛吉拉", value="佩洛洛吉拉"),
+    app_commands.Choice(name="霍德", value="霍德"),
+    app_commands.Choice(name="高茲", value="高茲"),
+    app_commands.Choice(name="葛利果", value="葛利果"),
+    app_commands.Choice(name="氣墊船", value="氣墊船"),
+    app_commands.Choice(name="黑影", value="黑影"),
+    app_commands.Choice(name="Geburah", value="Geburah")
+])
+@app_commands.choices(difficulty=[
+    app_commands.Choice(name="INSANE", value="INSANE"),
+    app_commands.Choice(name="TORMENT", value="TORMENT"),
+    app_commands.Choice(name="LUNATIC", value="LUNATIC")
+])
+@app_commands.choices(armor_type=[
+    app_commands.Choice(name="輕裝備", value="輕裝備"),
+    app_commands.Choice(name="彈力裝甲", value="彈力裝甲"),
+    app_commands.Choice(name="重裝甲", value="重裝甲"),
+    app_commands.Choice(name="特殊裝甲", value="特殊裝甲")
+])
+@app_commands.describe(
+    include_students="包含學生 (可選，逗號分隔)",
+    exclude_students="排除學生 (可選，逗號分隔)"
+)
+async def search_video(
+    interaction: discord.Interaction,
+    battle_field: str,
+    boss_name: str,
+    difficulty: str,
+    armor_type: str,
+    include_students: str = None,
+    exclude_students: str = None
+):
+    await interaction.response.defer()
+    
+    # Debug：印出收到的參數
+    print(f"DEBUG: search_video 收到參數：battle_field={battle_field}, boss_name={boss_name}, difficulty={difficulty}, armor_type={armor_type}")
+    if include_students:
+        print(f"DEBUG: include_students={include_students}")
+    if exclude_students:
+        print(f"DEBUG: exclude_students={exclude_students}")
+    
+    # 將阻塞的 CSV 轉換與名稱替換放到非同步線程執行
+    await asyncio.to_thread(csv_to_json, url, "output.json")
+    await asyncio.to_thread(replace_student_names, "output.json", "TL.json")
+    
+    # 讀取最終 JSON 檔
+    try:
+        with open("TL.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        await interaction.followup.send(f"讀取資料失敗: {e}", ephemeral=True)
+        return
+    
+    # 轉換 include_students 與 exclude_students 為清單
+    include_list = [s.strip() for s in include_students.split(",") if s.strip()] if include_students else []
+    exclude_list = [s.strip() for s in exclude_students.split(",") if s.strip()] if exclude_students else []
+    
+    # 根據 boss_name 判斷使用模式：若為 薇娜 或 KAITEN FX Mk.0 則為 3min 模式，其他為 4min
+    mode = "3min" if boss_name in ["薇娜", "KAITEN FX Mk.0"] else "4min"
+    print(f"DEBUG: 使用模式設定為：{mode}")
+    
+    results = []
+    for rec in data:
+        # 比對 battle_field, boss_name, armor_type 必須完全相符
+        if rec.get("battle-field") != battle_field:
+            continue
+        if rec.get("boss-name") != boss_name:
+            continue
+        if rec.get("armor") != armor_type:
+            continue
+
+        # 判斷難度
+        score = rec.get("score", 0)
+        rec_diff = arona.determine_difficulty(score, mode)
+        print(f"DEBUG: record id={rec.get('id')} score={score} 判定難度={rec_diff}")
+        if rec_diff != difficulty:
+            continue
+
+        # 取得學生欄位
+        students = []
+        for i in range(1, 61):
+            student = rec.get(f"student{i}")
+            if student is None:
+                break
+            students.append(student)
+
+        # 檢查 include_students 與 exclude_students 條件
+        if include_list and not all(include in students for include in include_list):
+            continue
+        if exclude_list and any(exclude in students for exclude in exclude_list):
+            continue
+
+        results.append({
+            "score": score,
+            "students": students,
+            "URL": rec.get("URL")
+        })
+
+        
+    if not results:
+        embed = discord.Embed(title="搜尋結果", description="沒有找到符合條件的結果。", color=discord.Color.blue())
+        await interaction.followup.send(embed=embed)
+        return    
+    
+    # 建立 Discord Embed 回覆
+    view = PaginationView(results, page_size=5)
+    embed = view.create_embed()  # 產生第一頁的 Embed
+
+    await interaction.followup.send(embed=embed, view=view)
 
 @bot.tree.command(name="restart", description="🔄 重新啟動 Bot (限管理員)")
 @app_commands.checks.has_permissions(administrator=True)

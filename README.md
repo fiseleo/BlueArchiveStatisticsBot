@@ -19,6 +19,10 @@ BlueArchiveStatisticsBot 是一款用於分析《Blue Archive》遊戲內總力�
   - 透過 `data.xlsx` 處理數據。
   - 自動爬取並更新最新的數據。
 
+- **搜尋影片**
+  - 透過`https://kina-ko-m-ochi.com/tl-search/` 爬取CSV檔
+  - 自動爬取並更新最新的數據。
+
 ## 安裝與運行
 
 ### 1. 安裝依賴套件
@@ -76,6 +80,7 @@ py bot.py
 | `/raidline <season>` | 查詢總力戰的排名門檻分數 |
 | `/eraidline <season>` | 查詢大決戰的排名門檻分數 |
 | `/stuusage <stu_name> <season> `| 取得指定學生前20筆使用率統計
+| `/search-video <battle_field> <boss_name> <difficulty> <armor_type> exclude_students include_students `| 依據條件搜尋影片資料|
 | `/restart` | 重新啟動 Bot (限管理員) |
 | `/exec-arona-ai-helper` | 執行 Arona AI Helper (限擁有者) |
 | `/exec-download-schaledb-data` | 執行下載 SchaleDB 資料腳本 (限擁有者) |
@@ -97,6 +102,7 @@ py bot.py
 ├── CollectionBG           # 背景圖
 ├── iconimages             # Icon圖片
 ├── studentsimage          # 學生圖片
+├── TL.json                # 影片資料
 └── id_name_mapping.json   # 學生ID 轉換 學生名子
 ```
 
