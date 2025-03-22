@@ -374,55 +374,68 @@ async def stuusage(interaction: discord.Interaction, stu_name: str, rank: int):
 
 
 
+
 class PaginationView(discord.ui.View):
     def __init__(self, results: list, page_size: int = 5):
-        super().__init__(timeout=180)  # 互動視窗 3 分鐘後失效
+        super().__init__(timeout=180)  # 互動視窗 3 分鐘後逾時
         self.results = results
         self.page_size = page_size
         self.current_page = 0
         # 計算總頁數
         self.max_page = (len(results) - 1) // page_size if results else 0
+        
+        # 等待逾時後要更新訊息用
+        self.message: Optional[discord.Message] = None
 
     def create_embed(self) -> discord.Embed:
-        """根據 current_page 產生對應頁面的 Embed。"""
         embed = discord.Embed(title="搜尋結果", color=discord.Color.blue())
-
         start_index = self.current_page * self.page_size
         end_index = start_index + self.page_size
         page_data = self.results[start_index:end_index]
 
         if not page_data:
-            # 理論上若有 results，就不會拿到空
             embed.description = "沒有找到符合條件的結果。"
             return embed
         
-        # 建立每一筆結果的欄位
         for idx, item in enumerate(page_data, start=start_index + 1):
             field_value = (
                 f"分數：{item['score']}\n"
+                f"用時：{item['used_time_str']}\n"
                 f"學生：{'、'.join(item['students'])}\n"
                 f"URL：{item['URL']}"
             )
             embed.add_field(name=f"結果 {idx}", value=field_value, inline=False)
 
-        # 顯示目前頁碼
         embed.set_footer(text=f"頁數：{self.current_page + 1} / {self.max_page + 1}")
         return embed
 
     @discord.ui.button(label="上一頁", style=discord.ButtonStyle.secondary)
     async def previous_page(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """上一頁按鈕"""
         if self.current_page > 0:
             self.current_page -= 1
         await interaction.response.edit_message(embed=self.create_embed(), view=self)
 
     @discord.ui.button(label="下一頁", style=discord.ButtonStyle.secondary)
     async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """下一頁按鈕"""
         if self.current_page < self.max_page:
             self.current_page += 1
         await interaction.response.edit_message(embed=self.create_embed(), view=self)
 
+    async def on_timeout(self):
+        """
+        當 View 逾時（timeout=180 秒後）自動被呼叫。
+        在這裡清除或禁用按鈕，並更新訊息。
+        """
+        # 清除所有按鈕
+        self.clear_items()
+        
+        # 如果要只是禁用按鈕（而非刪除），可以用：
+        # for child in self.children:
+        #     child.disabled = True
+
+        # 如果之前有記錄 message，就可以直接編輯
+        if self.message:
+            await self.message.edit(view=self)
 @bot.tree.command(name="search-video", description="依據條件搜尋影片資料")
 @app_commands.choices(battle_field=[
     app_commands.Choice(name="室內戰", value="室內戰"),
@@ -488,6 +501,23 @@ async def search_video(
         await interaction.followup.send(f"讀取資料失敗: {e}", ephemeral=True)
         return
     
+    boss_raid_id_map = {
+        "薇娜": 1,
+        "赫賽德": 2,
+        "白&黑": 3,
+        "耶羅尼姆斯": 4,
+        "KAITEN FX Mk.0": 5,
+        "佩洛洛吉拉": 6,
+        "霍德": 7,
+        "高茲": 8,
+        "葛利果": 9,
+        "氣墊船": 10,
+        "黑影": 11,
+        "Geburah": 12
+    }
+    # 若找不到，預設 0
+    raid_id = boss_raid_id_map.get(boss_name, 0)
+    
     # 轉換 include_students 與 exclude_students 為清單
     include_list = [s.strip() for s in include_students.split(",") if s.strip()] if include_students else []
     exclude_list = [s.strip() for s in exclude_students.split(",") if s.strip()] if exclude_students else []
@@ -527,8 +557,16 @@ async def search_video(
         if exclude_list and any(exclude in students for exclude in exclude_list):
             continue
 
+        try:
+            used_time_sec = arona.calculate_used_time(score, difficulty, raid_id)
+            # 假設有一個 format_time 函式可以把秒數轉成 mm:ss
+            used_time_str = arona.format_time(used_time_sec)
+        except Exception as e:
+            used_time_str = "計算失敗"
+
         results.append({
             "score": score,
+            "used_time_str": used_time_str,  # 把用時字串一起存
             "students": students,
             "URL": rec.get("URL")
         })
@@ -537,13 +575,15 @@ async def search_video(
     if not results:
         embed = discord.Embed(title="搜尋結果", description="沒有找到符合條件的結果。", color=discord.Color.blue())
         await interaction.followup.send(embed=embed)
-        return    
-    
+        return  
+      
+    results.sort(key=lambda x: x["score"], reverse=True)  # 依分數排序  
     # 建立 Discord Embed 回覆
     view = PaginationView(results, page_size=5)
     embed = view.create_embed()  # 產生第一頁的 Embed
+    message = await interaction.followup.send(embed=embed, view=view) # 顯示 Embed 與 View
 
-    await interaction.followup.send(embed=embed, view=view)
+    view.message = message  # 記錄 message，以便更新
 
 @bot.tree.command(name="restart", description="🔄 重新啟動 Bot (限管理員)")
 @app_commands.checks.has_permissions(administrator=True)
