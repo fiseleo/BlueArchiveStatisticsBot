@@ -10,13 +10,13 @@ import asyncio
 import subprocess
 import AronaRankLine as arona
 from typing import Optional
-from utils import csv_to_json, replace_student_names
+from utils import get_data, replace_student_names
 from typing import Optional
 
 
 
 # 載入學生數據
-url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1hFKXsxRA06SbB84DTe6gKcOympw3dKnDL2NMLgl7dqwnjy4SDcOBLbrRFbfkoZ_T3LUxWQo_KDeh/pub?output=csv"
+
 students_json_path = "students.json"
 
 # 檢查 JSON 檔案是否存在
@@ -436,6 +436,9 @@ class PaginationView(discord.ui.View):
         # 如果之前有記錄 message，就可以直接編輯
         if self.message:
             await self.message.edit(view=self)
+
+
+
 @bot.tree.command(name="search-video", description="依據條件搜尋影片資料")
 @app_commands.choices(battle_field=[
     app_commands.Choice(name="室內戰", value="室內戰"),
@@ -467,6 +470,10 @@ class PaginationView(discord.ui.View):
     app_commands.Choice(name="重裝甲", value="重裝甲"),
     app_commands.Choice(name="特殊裝甲", value="特殊裝甲")
 ])
+@app_commands.choices(considerhelper=[
+    app_commands.Choice(name="是", value="true"),
+    app_commands.Choice(name="否", value="false")
+])
 @app_commands.describe(
     include_students="包含學生 (可選，逗號分隔)",
     exclude_students="排除學生 (可選，逗號分隔)"
@@ -477,10 +484,13 @@ async def search_video(
     boss_name: str,
     difficulty: str,
     armor_type: str,
+    considerhelper: str,
     include_students: str = None,
     exclude_students: str = None
 ):
     await interaction.response.defer()
+
+    considerHelper_bool = True if considerhelper.lower() == "true" else False
     
     # Debug：印出收到的參數
     print(f"DEBUG: search_video 收到參數：battle_field={battle_field}, boss_name={boss_name}, difficulty={difficulty}, armor_type={armor_type}")
@@ -489,9 +499,9 @@ async def search_video(
     if exclude_students:
         print(f"DEBUG: exclude_students={exclude_students}")
     
-    # 將阻塞的 CSV 轉換與名稱替換放到非同步線程執行
-    await asyncio.to_thread(csv_to_json, url, "output.json")
-    await asyncio.to_thread(replace_student_names, "output.json", "TL.json")
+    # 將阻塞的資料取得與名稱替換放到非同步線程執行
+    await asyncio.to_thread(get_data, armor_type, battle_field, boss_name, difficulty, considerHelper_bool, exclude_students, include_students)
+    await asyncio.to_thread(replace_student_names, "cache.json", "TL.json")
     
     # 讀取最終 JSON 檔
     try:
@@ -515,14 +525,13 @@ async def search_video(
         "黑影": 11,
         "Geburah": 12
     }
-    # 若找不到，預設 0
     raid_id = boss_raid_id_map.get(boss_name, 0)
     
     # 轉換 include_students 與 exclude_students 為清單
     include_list = [s.strip() for s in include_students.split(",") if s.strip()] if include_students else []
     exclude_list = [s.strip() for s in exclude_students.split(",") if s.strip()] if exclude_students else []
     
-    # 根據 boss_name 判斷使用模式：若為 薇娜 或 KAITEN FX Mk.0 則為 3min 模式，其他為 4min
+    # 根據 boss_name 判斷使用模式
     mode = "3min" if boss_name in ["薇娜", "KAITEN FX Mk.0"] else "4min"
     print(f"DEBUG: 使用模式設定為：{mode}")
     
@@ -543,14 +552,9 @@ async def search_video(
         if rec_diff != difficulty:
             continue
 
-        # 取得學生欄位
-        students = []
-        for i in range(1, 61):
-            student = rec.get(f"student{i}")
-            if student is None:
-                break
-            students.append(student)
-
+        # 直接取出 "students" 欄位（data.json 的結構）
+        students = rec.get("students", [])
+        
         # 檢查 include_students 與 exclude_students 條件
         if include_list and not all(include in students for include in include_list):
             continue
@@ -559,31 +563,28 @@ async def search_video(
 
         try:
             used_time_sec = arona.calculate_used_time(score, difficulty, raid_id)
-            # 假設有一個 format_time 函式可以把秒數轉成 mm:ss
             used_time_str = arona.format_time(used_time_sec)
         except Exception as e:
             used_time_str = "計算失敗"
 
         results.append({
             "score": score,
-            "used_time_str": used_time_str,  # 把用時字串一起存
+            "used_time_str": used_time_str,
             "students": students,
             "URL": rec.get("URL")
         })
 
-        
     if not results:
         embed = discord.Embed(title="搜尋結果", description="沒有找到符合條件的結果。", color=discord.Color.blue())
         await interaction.followup.send(embed=embed)
         return  
       
-    results.sort(key=lambda x: x["score"], reverse=True)  # 依分數排序  
-    # 建立 Discord Embed 回覆
+    results.sort(key=lambda x: x["score"], reverse=True)
     view = PaginationView(results, page_size=5)
-    embed = view.create_embed()  # 產生第一頁的 Embed
-    message = await interaction.followup.send(embed=embed, view=view) # 顯示 Embed 與 View
-
-    view.message = message  # 記錄 message，以便更新
+    embed = view.create_embed()
+    message = await interaction.followup.send(embed=embed, view=view)
+    view.message = message
+    # 設定 View 的 message 屬性，讓它可以在逾時後更新訊息
 
 @bot.tree.command(name="restart", description="🔄 重新啟動 Bot (限管理員)")
 @app_commands.checks.has_permissions(administrator=True)
