@@ -115,5 +115,4 @@ py bot.py
 
 ![alt text](image.png)
 ![alt text](image-2.png)
-![image](https://github.com/user-attachments/assets/57f13557-2ea1-45b9-9270-232c02337252)
 
