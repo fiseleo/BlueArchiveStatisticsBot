@@ -149,7 +149,7 @@ def replace_student_names(input_json: str, output_json: str):
 
 
 def get_data(armor_type: str, battle_field: str, boss_name: str,
-                     difficulty: str, considerHelper_bool: bool, exclude_students: str, include_students: str):
+                     difficulty: str, considerHelper_bool: bool, bilibiliDisplay_bool: bool,exclude_students: str, include_students: str):
     url = "https://kina-ko-m-ochi.com/data_to_change/get_data.php"
     
     # 建立中→日翻譯對照表
@@ -221,6 +221,7 @@ def get_data(armor_type: str, battle_field: str, boss_name: str,
     payload = {
         "armor": jp_armor,
         "battleField": jp_battle_field,
+        "bilibiliDisplay": bilibiliDisplay_bool,
         "bossName": jp_boss_name,
         "considerHelper": considerHelper_bool,
         "difficulty": difficulty,

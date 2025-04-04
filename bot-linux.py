@@ -474,6 +474,10 @@ class PaginationView(discord.ui.View):
     app_commands.Choice(name="是", value="true"),
     app_commands.Choice(name="否", value="false")
 ])
+@app_commands.choices(bilibilidisplay=[
+    app_commands.Choice(name="是", value="true"),
+    app_commands.Choice(name="否", value="false")
+])
 @app_commands.describe(
     include_students="包含學生 (可選，逗號分隔)",
     exclude_students="排除學生 (可選，逗號分隔)"
@@ -485,13 +489,14 @@ async def search_video(
     difficulty: str,
     armor_type: str,
     considerhelper: str,
+    bilibilidisplay: str,
     include_students: str = None,
     exclude_students: str = None
 ):
     await interaction.response.defer()
 
     considerHelper_bool = True if considerhelper.lower() == "true" else False
-    
+    bilibiliDisplay_bool = True if bilibilidisplay.lower() == "true" else False
     # Debug：印出收到的參數
     print(f"DEBUG: search_video 收到參數：battle_field={battle_field}, boss_name={boss_name}, difficulty={difficulty}, armor_type={armor_type}")
     if include_students:
@@ -500,7 +505,7 @@ async def search_video(
         print(f"DEBUG: exclude_students={exclude_students}")
     
     # 將阻塞的資料取得與名稱替換放到非同步線程執行
-    await asyncio.to_thread(get_data, armor_type, battle_field, boss_name, difficulty, considerHelper_bool, exclude_students, include_students)
+    await asyncio.to_thread(get_data, armor_type, battle_field, boss_name, difficulty, considerHelper_bool, bilibiliDisplay_bool, exclude_students, include_students)
     await asyncio.to_thread(replace_student_names, "cache.json", "TL.json")
     
     # 讀取最終 JSON 檔
