@@ -80,7 +80,7 @@ py bot.py
 | `/raidline <season>` | 查詢總力戰的排名門檻分數 |
 | `/eraidline <season>` | 查詢大決戰的排名門檻分數 |
 | `/stuusage <stu_name> <season> `| 取得指定學生前20筆使用率統計
-| `/search-video <battle_field> <boss_name> <difficulty> <armor_type> <considerhelper> exclude_students include_students `| 依據條件搜尋影片資料|
+| `/search-video <battle_field> <boss_name> <difficulty> <armor_type> <considerhelper> <bilibilidisplay> exclude_students include_students `| 依據條件搜尋影片資料|
 | `/restart` | 重新啟動 Bot (限管理員) |
 | `/exec-arona-ai-helper` | 執行 Arona AI Helper (限擁有者) |
 | `/exec-download-schaledb-data` | 執行下載 SchaleDB 資料腳本 (限擁有者) |
