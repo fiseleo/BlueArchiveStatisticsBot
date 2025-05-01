@@ -400,7 +400,7 @@ class PaginationView(discord.ui.View):
                 f"分數：{item['score']}\n"
                 f"用時：{item['used_time_str']}\n"
                 f"學生：{'、'.join(item['students'])}\n"
-                f"URL：{item['URL']}"
+                f"url：{item['url']}"
             )
             embed.add_field(name=f"結果 {idx}", value=field_value, inline=False)
 
@@ -541,15 +541,19 @@ async def search_video(
     results = []
     for rec in data:
         # 比對 battle_field, boss_name, armor_type 必須完全相符
-        if rec.get("battle-field") != battle_field:
+        if rec.get("battle_field") != battle_field:
             continue
-        if rec.get("boss-name") != boss_name:
+        if rec.get("boss_name") != boss_name:
             continue
         if rec.get("armor") != armor_type:
             continue
 
         # 判斷難度
-        score = rec.get("score", 0)
+        raw_score = rec.get("score", 0)
+        try:
+            score = int(raw_score)
+        except ValueError:
+            continue
         rec_diff = arona.determine_difficulty(score, mode)
         print(f"DEBUG: record id={rec.get('id')} score={score} 判定難度={rec_diff}")
         if rec_diff != difficulty:
@@ -574,7 +578,7 @@ async def search_video(
             "score": score,
             "used_time_str": used_time_str,
             "students": students,
-            "URL": rec.get("URL")
+            "url": rec.get("url")
         })
 
     if not results:

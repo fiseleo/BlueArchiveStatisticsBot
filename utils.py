@@ -4,6 +4,7 @@ import asyncio
 import AronaRankLine as determine_difficulty
 import json
 import requests
+from datetime import datetime, timezone
 def get_student_usage_stats(usage_data: list) -> list:
     """
     接收學生使用狀況資料的二維陣列，每個內部陣列包含完整列資料：
@@ -124,20 +125,20 @@ def replace_student_names(input_json: str, output_json: str):
         if "students" in rec and isinstance(rec["students"], list):
             rec["students"] = [jp_to_cn_mapping.get(name, name) for name in rec["students"]]
 
-    # 5) 替換其他欄位：armor, boss-name, battle-field
+    # 5) 替換其他欄位：armor, boss_name, battle_field
     for rec in records:
         if "armor" in rec and rec["armor"] is not None:
             original = rec["armor"]
             if original in armor_mapping:
                 rec["armor"] = armor_mapping[original]
-        if "boss-name" in rec and rec["boss-name"] is not None:
-            original = rec["boss-name"]
+        if "boss_name" in rec and rec["boss_name"] is not None:
+            original = rec["boss_name"]
             if original in boss_name_mapping:
-                rec["boss-name"] = boss_name_mapping[original]
-        if "battle-field" in rec and rec["battle-field"] is not None:
-            original = rec["battle-field"]
+                rec["boss_name"] = boss_name_mapping[original]
+        if "battle_field" in rec and rec["battle_field"] is not None:
+            original = rec["battle_field"]
             if original in battle_field_mapping:
-                rec["battle-field"] = battle_field_mapping[original]
+                rec["battle_field"] = battle_field_mapping[original]
 
     # 6) 輸出最終 JSON
     with open(output_json, "w", encoding="utf-8") as f:
@@ -150,7 +151,7 @@ def replace_student_names(input_json: str, output_json: str):
 
 def get_data(armor_type: str, battle_field: str, boss_name: str,
                      difficulty: str, considerHelper_bool: bool, bilibiliDisplay_bool: bool,exclude_students: str, include_students: str):
-    url = "https://kina-ko-m-ochi.com/data_to_change/get_data.php"
+    url = "https://kina-ko-m-ochi.com/data_to_change/get_data2.php"
     
     # 建立中→日翻譯對照表
     armor_translation = {
@@ -228,19 +229,31 @@ def get_data(armor_type: str, battle_field: str, boss_name: str,
         "excludeStudents": translated_exclude,
         "includeStudents": translated_include,
         "uniqueFormation": True,
+        "sortOrder": "スコアの高い順",
+        "studentStatus": {},
+        "unitNumber": 0,  
         "unit": "0"  # 0 = 不考慮幾刀，1 = 優先找一刀的組合，2 = 優先找兩刀的組合
     }
-    
+    now = datetime.now(timezone.utc)
+    http_date = now.strftime('%a, %d %b %Y %H:%M:%S GMT')
     headers = {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0"
+        "Content-Encoding" : "gzip",
+        "Server": "nginx",
+        "Date" :  http_date,
+        "X-Content-Type-Options": "nosniff",
+        "X-Xss-Protection" : "1; mode=block",
+        "Content-Type": "application/json; charset=UTF-8",
     }
     
     # 發送 POST 請求
+    #print("發送請求到", url)
+    #print(payload)
+    #print(headers)
     response = requests.post(url, json=payload, headers=headers)
     response.raise_for_status()
     try:
         data = response.json()
+        # print("成功解析 JSON 響應:", data)
     except json.JSONDecodeError:
         print("無法解析 JSON 響應:", response.text)
         data = {"response" : response.text}    
