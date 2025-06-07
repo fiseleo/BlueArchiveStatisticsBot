@@ -410,3 +410,16 @@ id_name_mapping.json
 output.json
 TL.json
 cache.json
+
+db/Windows/mx
+db/Windows/EliminateRaidSeasonManageExcelTable.json
+db/Windows/RaidSeasonManageExcelTable.json
+db/Windows/RaidDatabase.db
+db/Windows/mx.dat
+
+# Linux specific files
+db/Linux/mx
+db/Linux/EliminateRaidSeasonManageExcelTable.json
+db/Linux/RaidSeasonManageExcelTable.json
+db/Linux/RaidDatabase.db
+db/Linux/mx.dat
