@@ -17,17 +17,13 @@ DB_FILE = LINUX_DB if sys.platform.startswith("linux") else WINDOWS_DB
 PNG_PATH = Path(__file__).parent.parent / "PNG"
 RAID_PATH = PNG_PATH / "Raid"
 
-AR01 = RAID_PATH / "Arena_RankIcon_01.png" #4檔
-AR02 = RAID_PATH / "Arena_RankIcon_02.png" #3檔
-AR03 = RAID_PATH / "Arena_RankIcon_03.png" #2檔
-AR04 = RAID_PATH / "Arena_RankIcon_04.png" #1檔
+
 TIER_MAPPING = {
-    4: {"name": "Platinum", "icon": RAID_PATH / "Arena_RankIcon_04.png"},
-    3: {"name": "Gold", "icon": RAID_PATH / "Arena_RankIcon_03.png"},
-    2: {"name": "Silver", "icon": RAID_PATH / "Arena_RankIcon_02.png"},
-    1: {"name": "Bronze", "icon": RAID_PATH / "Arena_RankIcon_01.png"},
-    0: {"name": "Unranked", "icon": None}
+    1: "<:tier_platinum:1380951310643363870>",
+    10001: "<:tier_gold:1380951416419651624>",
+    50001: "<:tier_silver:1380951575601610762>",
 }
+
 
 BOSS_ICON_MAPPING = {
     "Binah": RAID_PATH / "Binah.png",
@@ -378,7 +374,6 @@ class GLRankLineSelect(discord.ui.Select):
         self.cog = cog
         options = [discord.SelectOption(label=table, description=f"查詢 {table} 的分數線") for table in cog.table_list]
         super().__init__(placeholder="選擇一個賽季...", min_values=1, max_values=1, options=options[:25])
-
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
         table_name = self.values[0]
@@ -419,9 +414,10 @@ class GLRankLineSelect(discord.ui.Select):
                         embed.add_field(name=f"第 {rank} 名", value="無資料", inline=False)
                         continue
 
-                    nickname = data['Nickname']
-                    field_name = f"第 {rank} 名"
-                    field_value = f"**{nickname}**\n總分: **{data['BestRankingPoint']:,}**\n"
+                    emoji = TIER_MAPPING.get(rank, "")  # Get emoji if rank matches, else empty string
+                    field_name = f"{emoji} 第 {rank} 名".strip() # .strip() removes leading space if no emoji
+                    
+                    field_value = f"**{data['Nickname']}**\n總分: **{data['BestRankingPoint']:,}**\n"
                     mode = "3min" if raid_id in [1, 5] else "4min"
 
                     if is_eliminate:
@@ -432,16 +428,14 @@ class GLRankLineSelect(discord.ui.Select):
                             difficulty = arona.determine_difficulty(int(armor_score), mode)
                             try:
                                 used_time_sec = arona.calculate_used_time(int(armor_score), difficulty, raid_id)
-                                formatted_time = arona.format_time(used_time_sec)
-                                field_value += f"> **{armor}**: {armor_score:,} ({difficulty} - {formatted_time})\n"
+                                field_value += f"> **{armor}**: {armor_score:,} ({difficulty} - {arona.format_time(used_time_sec)})\n"
                             except Exception:
                                 field_value += f"> **{armor}**: {armor_score:,} ({difficulty} - 計算錯誤)\n"
                     else:
                         difficulty = arona.determine_difficulty(int(data['BestRankingPoint']), mode)
                         try:
                             used_time_sec = arona.calculate_used_time(int(data['BestRankingPoint']), difficulty, raid_id)
-                            formatted_time = arona.format_time(used_time_sec)
-                            field_value += f"難度: **{difficulty}**\n用時: **{formatted_time}**"
+                            field_value += f"難度: **{difficulty}**\n用時: **{arona.format_time(used_time_sec)}**"
                         except Exception:
                              field_value += f"難度: **{difficulty}**\n用時: **計算錯誤**"
                     
