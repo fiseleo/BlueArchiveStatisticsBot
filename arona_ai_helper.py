@@ -5,11 +5,17 @@
 # @author       fiseleo (python script)
 
 
+import io
+import sys
 import requests
 import time
 import re
 from openpyxl import Workbook
 
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+if sys.stderr.encoding != 'utf-8':
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 def get_json(url):
     """用 requests 抓取 JSON 資料，失敗時傳回 None"""

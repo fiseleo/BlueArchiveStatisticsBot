@@ -1,33 +1,46 @@
+import io
+from pathlib import Path
+import sys
 import requests
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
+
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+if sys.stderr.encoding != 'utf-8':
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
 # 定義 URL
 urls = {
     "students.json": "https://schaledb.com/data/tw/students.json",
     "localization.json": "https://schaledb.com/data/tw/localization.json"
 }
+JSON_DIR = Path(__file__).parent / "Json"
+STUDENTS_JSON = JSON_DIR / "students.json"
+JSON_DIR.mkdir(exist_ok=True) 
 
 # 下載並保存 JSON 文件
 for filename, url in urls.items():
+    Save_Path = JSON_DIR / filename
     response = requests.get(url)
     if response.status_code == 200:
-        with open(filename, "w", encoding="utf-8") as file:
+        with open(Save_Path, "w", encoding="utf-8") as file:
             json.dump(response.json(), file, ensure_ascii=False, indent=4)
-        print(f"下載完成: {filename}")
+        print(f"下載完成: {Save_Path}")
     else:
         print(f"下載失敗: {filename}, 狀態碼: {response.status_code}")
 
 # 讀取 students.json
-with open("students.json", "r", encoding="utf-8") as file:
+with open(STUDENTS_JSON, "r", encoding="utf-8") as file:
     students = json.load(file)
 
 # 資料夾名稱
 students_folder = "studentsimage"
 bg_folder = "CollectionBG"
-output_json_path = "id_name_mapping.json"
+output_json_path =  JSON_DIR / "id_name_mapping.json"
 
 # 確保資料夾存在
 os.makedirs(students_folder, exist_ok=True)

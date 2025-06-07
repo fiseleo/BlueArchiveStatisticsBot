@@ -1,4 +1,5 @@
 
+from pathlib import Path
 import pandas as pd
 import asyncio
 import AronaRankLine as determine_difficulty
@@ -249,6 +250,9 @@ def get_data(armor_type: str, battle_field: str, boss_name: str,
     #print("發送請求到", url)
     #print(payload)
     #print(headers)
+    JSON_DIR = Path(__file__).parent / "Json"
+    JSON_DIR.mkdir(parents=True, exist_ok=True)
+    CACHE_JSON = JSON_DIR / "cache.json"
     response = requests.post(url, json=payload, headers=headers)
     response.raise_for_status()
     try:
@@ -257,7 +261,7 @@ def get_data(armor_type: str, battle_field: str, boss_name: str,
     except json.JSONDecodeError:
         print("無法解析 JSON 響應:", response.text)
         data = {"response" : response.text}    
-    with open("cache.json", "w", encoding="utf-8") as f:
+    with open(CACHE_JSON, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
     print("✅ 已將資料寫入 cache.json")
 

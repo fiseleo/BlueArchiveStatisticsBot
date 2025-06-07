@@ -62,11 +62,11 @@ YOUR_DISCORD_ID_HERE
 
 (linux)
 ```bash
-python3 bot-linux.py
+python3 bot_refactored.py
 ```
 (Windows)
 ```bash
-py bot.py
+py bot_refactored.py
 ```
 
 ## 指令列表
@@ -113,7 +113,7 @@ py bot.py
 - **YourNameMitsuha** (圖片開發)
 
 
-![alt text](image.png)
-![alt text](image-2.png)
-![alt text](image-3.png)
+![alt text](PNG/image.png)
+![alt text](PNG/image-2.png)
+![alt text](PNG/image-3.png)
 

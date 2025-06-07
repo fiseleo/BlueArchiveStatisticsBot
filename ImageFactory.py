@@ -1,4 +1,5 @@
 import io
+from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 class BlueArchiveData:
@@ -49,7 +50,9 @@ class ImageFactory:
         for key, value in NamePreProcessList.items():
             CharacterName = CharacterName.replace(key,value)
         
-        font = ImageFont.truetype("msjhbd.ttc", 42) #微軟正黑體
+        Font = Path(__file__).parent / "Font"
+        
+        font = ImageFont.truetype(Font/"msjhbd.ttc", 42) #微軟正黑體
         #font_title = ImageFont.truetype("msjhbd.ttc", 40) #微軟正黑體
 
         BaseImageDraw.rounded_rectangle([CardLeftX,CardDownY-80+5,CardRightX,CardDownY],1,(0,0,0,150))
