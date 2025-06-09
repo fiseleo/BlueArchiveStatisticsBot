@@ -153,11 +153,11 @@ class GLRankLineCog(commands.Cog):
             
     # --- 新增指令 ---
     @app_commands.command(name="glwarnrank", description="設定排名提醒，當您的排名接近目標時提醒您")
-    @app_commands.describe(uid="您的遊戲內 Account ID", targetrank="您想設定的目標排名")
+    @app_commands.describe(uid="您的遊戲內 UID", targetrank="您想設定的目標排名")
     async def glwarnrank(self, interaction: discord.Interaction, uid: int, targetrank: int):
         await interaction.response.defer(ephemeral=True)
         if not self.table_list:
-            await interaction.followup.send("錯誤：目前沒有可用的總力戰資料。", ephemeral=True)
+            await interaction.followup.send("錯誤：目前沒有可用的總力戰/大決戰資料。", ephemeral=True)
             return
 
         latest_table = self.table_list[0]
@@ -320,7 +320,7 @@ class GLRankUserSelect(discord.ui.Select):
         super().__init__(placeholder="選擇一個賽季...", min_values=1, max_values=1, options=options[:25])
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True, thinking=True)
+        await interaction.response.defer(ephemeral=False, thinking=True)
         table_name = self.values[0]
 
         try:
@@ -348,17 +348,17 @@ class GLRankUserSelect(discord.ui.Select):
                 num_results = len(all_data)
 
                 if num_results == 0:
-                    await interaction.followup.send(f"在賽季 **{table_name}** 中找不到玩家 **{self.nickname}** 的排名資料。", ephemeral=True)
+                    await interaction.followup.send(f"在賽季 **{table_name}** 中找不到玩家 **{self.nickname}** 的排名資料。")
                 elif num_results == 1:
                     embed, student_file = await self.cog._create_user_rank_embed(all_data[0], **context)
-                    await interaction.followup.send(embed=embed, file=student_file, ephemeral=True)
+                    await interaction.followup.send(embed=embed, file=student_file)
                 else:
                     first_embed, first_file = await self.cog._create_user_rank_embed(all_data[0], **context)
                     first_embed.set_footer(text=f"玩家 1 / {num_results}")
                     view = PaginatedUserView(all_data, self.cog, context)
                     await interaction.followup.send(
                         f"找到了 {num_results} 位名為 **{self.nickname}** 的玩家，正在顯示第 1 位:",
-                        embed=first_embed, file=first_file, view=view, ephemeral=True
+                        embed=first_embed, file=first_file, view=view
                     )
         except Exception as e:
             await interaction.followup.send(f"處理您的請求時發生未預期的錯誤：{e}", ephemeral=True)
